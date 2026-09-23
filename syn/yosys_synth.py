@@ -36,7 +36,9 @@ Results: syn/reports/yosys_summary.md (committed), logs in syn/out/ (not).
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -132,13 +134,33 @@ def parse_ltp(text: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
+def yosys_exe() -> str:
+    """Locate the YoWASP Yosys wrapper.
+
+    The default is the project venv, which on Linux/WSL keeps its scripts in
+    bin/ and on Windows in Scripts/. FH_YOSYS overrides it, so the same
+    script also runs against a scratch venv or a system-wide install - the
+    whole point of YoWASP being that synthesis needs no particular machine.
+    """
+    override = os.environ.get("FH_YOSYS")
+    if override:
+        return override
+    # Both venv layouts, so the flow works from WSL and from a Windows shell.
+    for rel in ("bin/yowasp-yosys", "Scripts/yowasp-yosys.exe"):
+        cand = ROOT / ".venv" / rel
+        if cand.exists():
+            return str(cand)
+    # Otherwise whatever is on PATH; "yowasp-yosys" itself if nothing is.
+    return shutil.which("yowasp-yosys") or "yowasp-yosys"
+
+
 def run(top: str) -> dict:
     """Synthesise one module; return its numbers, or raise on failure."""
     OUT.mkdir(parents=True, exist_ok=True)
     # YoWASP can only touch files under the working directory, so every
     # path handed to it is relative to the repo root.
     log_rel = f"syn/out/yosys_{top}"
-    cmd = [str(ROOT / ".venv" / "bin" / "yowasp-yosys"), "-q",
+    cmd = [yosys_exe(), "-q",
            "-l", f"{log_rel}.log", "-p", yosys_script(top, log_rel)]
     t0 = time.time()
     r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)

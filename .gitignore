@@ -19,3 +19,7 @@ vivado*.jou
 vivado*.log
 .Xil/
 syn/out/
+
+# cocotb / Verilator build output and per-run results
+tb/sim_build/
+tb/results.xml
