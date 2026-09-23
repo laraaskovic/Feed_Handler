@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl bash *)",
+      "Bash(python -)",
+      "Bash(cd \"C:/Users/laraa/Documents/GitHub/Feed_Handler\" && cp /tmp/hdr_parse.sv.bak rtl/hdr_parse.sv && grep -n \"vlan_tagged ?\" rtl/hdr_parse.sv | head -2 && wsl bash -lc \".venv/bin/python tb/run.py hdr_parse 2>&1 | grep -E 'TESTS='\")",
+      "Bash(python peak_orders.py ../data/synth_small.itch)",
+      "Bash(nohup python peak_orders.py ../data/01302019.NASDAQ_ITCH50.gz)",
+      "Bash(cp rtl/msg_frame.sv /tmp/mf.bak)",
+      "Bash(python -c ' *)",
+      "Bash(cp /tmp/mf.bak rtl/msg_frame.sv)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}

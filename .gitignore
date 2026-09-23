@@ -1,0 +1,21 @@
+# Market data is large and redistribution is restricted - never commit it.
+data/*
+!data/README.md
+*.gz
+*.itch
+*.csv
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Vivado / Verilator junk
+obj_dir/
+*.vcd
+*.fst
+vivado*.jou
+vivado*.log
+.Xil/
+syn/out/

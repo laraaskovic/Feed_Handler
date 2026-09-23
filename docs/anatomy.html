@@ -1,0 +1,660 @@
+<title>Feed Handler Anatomy</title>
+<style>
+  :root {
+    --bg: #fbfaf8;
+    --surface: #ffffff;
+    --ink: #1b1a18;
+    --ink-soft: #5c5853;
+    --ink-faint: #8b857d;
+    --rule: #e0dcd5;
+    --rule-strong: #c8c2b8;
+
+    --logic: #2f6f9f;        /* combinational / datapath blocks */
+    --logic-bg: #e8f1f8;
+    --mem: #b06a1f;          /* memories - conceptually different */
+    --mem-bg: #fbf0e2;
+    --sw: #6b6660;           /* software side */
+    --sw-bg: #f1efec;
+    --vendor: #3f7d58;       /* vendor IP */
+    --vendor-bg: #e8f2ec;
+    --warn: #a33b32;
+
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16171a;
+      --surface: #1e2024;
+      --ink: #e9e6e1;
+      --ink-soft: #a8a49d;
+      --ink-faint: #7d7872;
+      --rule: #32353b;
+      --rule-strong: #464a52;
+
+      --logic: #6fb0dd;
+      --logic-bg: #1b2a36;
+      --mem: #d9a05b;
+      --mem-bg: #2e2418;
+      --sw: #9a958d;
+      --sw-bg: #24262a;
+      --vendor: #72b48d;
+      --vendor-bg: #1a2721;
+      --warn: #e08076;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16171a;
+    --surface: #1e2024;
+    --ink: #e9e6e1;
+    --ink-soft: #a8a49d;
+    --ink-faint: #7d7872;
+    --rule: #32353b;
+    --rule-strong: #464a52;
+
+    --logic: #6fb0dd;
+    --logic-bg: #1b2a36;
+    --mem: #d9a05b;
+    --mem-bg: #2e2418;
+    --sw: #9a958d;
+    --sw-bg: #24262a;
+    --vendor: #72b48d;
+    --vendor-bg: #1a2721;
+    --warn: #e08076;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    padding-block: 48px 96px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  main { max-width: 1140px; margin: 0 auto; }
+
+  h1 {
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  .lede { color: var(--ink-soft); font-size: 1.08rem; margin: 0 0 8px; max-width: 62ch; }
+  h2 {
+    font-size: 1.32rem;
+    letter-spacing: -0.01em;
+    margin: 64px 0 4px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 6px;
+    letter-spacing: 0.08em;
+  }
+  h3 { font-size: 1.02rem; margin: 32px 0 6px; }
+  p { max-width: 68ch; }
+  .sub { color: var(--ink-soft); margin: 0 0 24px; max-width: 68ch; }
+  code { font-family: var(--mono); font-size: 0.88em; }
+  a { color: var(--logic); }
+
+  .scroll {
+    overflow-x: auto;
+    margin: 24px 0;
+    padding-bottom: 4px;
+  }
+  svg { display: block; max-width: 100%; height: auto; }
+  svg text { font-family: var(--sans); fill: var(--ink); }
+  svg .mono { font-family: var(--mono); }
+
+  figure { margin: 0; }
+  figcaption {
+    color: var(--ink-faint);
+    font-size: 0.86rem;
+    margin-top: 10px;
+    max-width: 70ch;
+  }
+
+  table { border-collapse: collapse; width: 100%; margin: 20px 0; font-size: 0.94rem; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-faint); font-weight: 600; }
+  td:first-child { font-family: var(--mono); font-size: 0.86rem; white-space: nowrap; }
+  .wide-table { overflow-x: auto; }
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--logic);
+    border-radius: 3px;
+    padding: 18px 22px;
+    margin: 28px 0;
+  }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout p { margin: 0; max-width: 66ch; }
+  .callout p + p { margin-top: 10px; }
+  .callout strong { color: var(--ink); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 20px; margin: 16px 0 0; font-size: 0.86rem; color: var(--ink-soft); }
+  .legend span { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 13px; height: 13px; border-radius: 2px; flex: none; }
+
+  .journey { margin: 24px 0; }
+  .journey ol { list-style: none; padding: 0; margin: 0; counter-reset: j; }
+  .journey li {
+    counter-increment: j;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .journey li::before {
+    content: counter(j);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    border: 1px solid var(--rule-strong);
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    margin-top: 2px;
+  }
+  .journey b { display: block; font-size: 0.95rem; }
+  .journey .detail { color: var(--ink-soft); font-size: 0.92rem; }
+  .journey .bytes { font-family: var(--mono); font-size: 0.82rem; color: var(--logic); word-break: break-all; }
+
+  @media (max-width: 560px) {
+    body { font-size: 15px; }
+    .journey li { grid-template-columns: 26px 1fr; gap: 12px; }
+  }
+</style>
+
+<main>
+
+<h1>What a feed handler actually does</h1>
+<p class="lede">It is a translator with a memory. Bytes arrive off a wire; a current
+picture of the market comes out. Everything below is that one sentence, drawn at
+four levels of detail.</p>
+
+<!-- ==================================================================== -->
+<h2><span class="num">01 — THE LOGIC</span>Five operations, and only five</h2>
+<p class="sub">Bytes in on the left, best bid and offer out on the right. The first
+three operations are pure byte shuffling: no memory, just counters and wires. The
+last two hold state, and that is where all the difficulty lives.</p>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 1120 400" role="img" aria-label="Pipeline of five operations from wire to BBO">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="var(--rule-strong)"/>
+    </marker>
+    <marker id="arm" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="var(--mem)"/>
+    </marker>
+  </defs>
+
+  <!-- grouping bands -->
+  <rect x="96" y="58" width="530" height="132" rx="5" fill="none" stroke="var(--rule)" stroke-dasharray="4 4"/>
+  <text x="361" y="46" text-anchor="middle" font-size="12.5" fill="var(--ink-faint)">
+    stateless — counters and wires only
+  </text>
+  <rect x="646" y="58" width="358" height="132" rx="5" fill="none" stroke="var(--mem)" stroke-dasharray="4 4" opacity="0.7"/>
+  <text x="825" y="46" text-anchor="middle" font-size="12.5" fill="var(--mem)">
+    stateful — this is the hard part
+  </text>
+
+  <!-- input -->
+  <text x="14" y="118" font-size="13" fill="var(--ink-soft)">wire</text>
+  <text x="14" y="136" font-size="11.5" class="mono" fill="var(--ink-faint)">10 Gb/s</text>
+  <line x1="62" y1="124" x2="92" y2="124" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#ar)"/>
+
+  <!-- stage boxes -->
+  <g>
+    <rect x="96" y="80" width="160" height="88" rx="4" fill="var(--logic-bg)" stroke="var(--logic)" stroke-width="1.3"/>
+    <text x="108" y="102" font-size="11" class="mono" fill="var(--logic)">1</text>
+    <text x="176" y="115" text-anchor="middle" font-size="15" font-weight="600">Deframe</text>
+    <text x="176" y="137" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">strip eth / ip / udp</text>
+    <text x="176" y="152" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">and MoldUDP64</text>
+  </g>
+  <line x1="256" y1="124" x2="282" y2="124" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#ar)"/>
+  <g>
+    <rect x="286" y="80" width="160" height="88" rx="4" fill="var(--logic-bg)" stroke="var(--logic)" stroke-width="1.3"/>
+    <text x="298" y="102" font-size="11" class="mono" fill="var(--logic)">2</text>
+    <text x="366" y="115" text-anchor="middle" font-size="15" font-weight="600">Frame</text>
+    <text x="366" y="137" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">find each message</text>
+    <text x="366" y="152" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">boundary, align it</text>
+  </g>
+  <line x1="446" y1="124" x2="472" y2="124" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#ar)"/>
+  <g>
+    <rect x="476" y="80" width="150" height="88" rx="4" fill="var(--logic-bg)" stroke="var(--logic)" stroke-width="1.3"/>
+    <text x="488" y="102" font-size="11" class="mono" fill="var(--logic)">3</text>
+    <text x="551" y="115" text-anchor="middle" font-size="15" font-weight="600">Decode</text>
+    <text x="551" y="137" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">pull out the fields</text>
+    <text x="551" y="152" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">by bit position</text>
+  </g>
+  <line x1="626" y1="124" x2="652" y2="124" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#ar)"/>
+  <g>
+    <rect x="656" y="80" width="150" height="88" rx="4" fill="var(--mem-bg)" stroke="var(--mem)" stroke-width="1.3"/>
+    <text x="668" y="102" font-size="11" class="mono" fill="var(--mem)">4</text>
+    <text x="731" y="115" text-anchor="middle" font-size="15" font-weight="600">Look up</text>
+    <text x="731" y="137" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">which order is this?</text>
+    <text x="731" y="152" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">what side and price?</text>
+  </g>
+  <line x1="806" y1="124" x2="832" y2="124" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#ar)"/>
+  <g>
+    <rect x="836" y="80" width="168" height="88" rx="4" fill="var(--mem-bg)" stroke="var(--mem)" stroke-width="1.3"/>
+    <text x="848" y="102" font-size="11" class="mono" fill="var(--mem)">5</text>
+    <text x="920" y="115" text-anchor="middle" font-size="15" font-weight="600">Update + select</text>
+    <text x="920" y="137" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">adjust the level, then</text>
+    <text x="920" y="152" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">find the best price</text>
+  </g>
+  <line x1="1004" y1="124" x2="1034" y2="124" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#ar)"/>
+  <text x="1040" y="118" font-size="13" fill="var(--ink-soft)">BBO</text>
+  <text x="1040" y="136" font-size="11.5" class="mono" fill="var(--ink-faint)">out</text>
+
+  <!-- memories -->
+  <line x1="731" y1="168" x2="731" y2="252" stroke="var(--mem)" stroke-width="1.3" marker-end="url(#arm)"/>
+  <line x1="700" y1="252" x2="700" y2="168" stroke="var(--mem)" stroke-width="1.3" stroke-dasharray="3 3" marker-end="url(#arm)"/>
+  <g>
+    <rect x="628" y="254" width="206" height="72" rx="4" fill="var(--surface)" stroke="var(--mem)" stroke-width="1.3"/>
+    <text x="731" y="279" text-anchor="middle" font-size="13.5" font-weight="600">order table</text>
+    <text x="731" y="298" text-anchor="middle" font-size="11.5" class="mono" fill="var(--ink-soft)">ref → side, price, qty</text>
+    <text x="731" y="314" text-anchor="middle" font-size="11" fill="var(--ink-faint)">millions of live entries</text>
+  </g>
+  <line x1="920" y1="168" x2="920" y2="252" stroke="var(--mem)" stroke-width="1.3" marker-end="url(#arm)"/>
+  <g>
+    <rect x="846" y="254" width="206" height="72" rx="4" fill="var(--surface)" stroke="var(--mem)" stroke-width="1.3"/>
+    <text x="949" y="279" text-anchor="middle" font-size="13.5" font-weight="600">price levels</text>
+    <text x="949" y="298" text-anchor="middle" font-size="11.5" class="mono" fill="var(--ink-soft)">price → total shares</text>
+    <text x="949" y="314" text-anchor="middle" font-size="11" fill="var(--ink-faint)">one row per tick</text>
+  </g>
+
+  <!-- why 4 is unavoidable -->
+  <text x="300" y="285" font-size="12.5" fill="var(--warn)" font-weight="600">Why step 4 cannot be skipped:</text>
+  <text x="300" y="305" font-size="12.5" fill="var(--ink-soft)">a cancel or execute names the order</text>
+  <text x="300" y="322" font-size="12.5" fill="var(--ink-soft)">by a 64-bit number and nothing else —</text>
+  <text x="300" y="339" font-size="12.5" fill="var(--ink-soft)">no side, no price, no symbol.</text>
+  <text x="300" y="362" font-size="12.5" fill="var(--ink-soft)">So every message must wait on a</text>
+  <text x="300" y="379" font-size="12.5" fill="var(--ink-soft)">memory read before it can be applied.</text>
+</svg>
+</div>
+<figcaption>The exchange runs the market and broadcasts what happened. This pipeline
+only listens: it never matches a buyer to a seller, never sets a price, never accepts
+or rejects an order.</figcaption>
+</figure>
+
+<!-- ==================================================================== -->
+<h2><span class="num">02 — SOFTWARE vs HARDWARE</span>The same five operations, twice</h2>
+<p class="sub">Left is what the Python model in <code>model/</code> does. Right is what
+the SystemVerilog has to do instead. The middle column is the interesting part: what
+you give up in the translation.</p>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 1120 620" role="img" aria-label="Software constructs mapped to hardware constructs">
+  <defs>
+    <marker id="ar2" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="var(--rule-strong)"/>
+    </marker>
+  </defs>
+
+  <text x="170" y="26" text-anchor="middle" font-size="13" font-weight="600" fill="var(--sw)">SOFTWARE — model/</text>
+  <text x="560" y="26" text-anchor="middle" font-size="12" fill="var(--ink-faint)">what changes</text>
+  <text x="930" y="26" text-anchor="middle" font-size="13" font-weight="600" fill="var(--logic)">HARDWARE — rtl/</text>
+
+  <!-- row helper geometry: rows at y = 48, 152, 256, 360, 476 -->
+
+  <!-- row 1 -->
+  <rect x="20" y="44" width="300" height="84" rx="4" fill="var(--sw-bg)" stroke="var(--rule-strong)"/>
+  <text x="34" y="66" font-size="11.5" class="mono" fill="var(--ink-faint)">1  deframe</text>
+  <text x="34" y="88" font-size="12.5" class="mono">off = 12</text>
+  <text x="34" y="106" font-size="12.5" class="mono">if vlan: off += 4</text>
+  <text x="34" y="122" font-size="12.5" class="mono">ihl = buf[off] &amp; 0x0F</text>
+  <line x1="324" y1="86" x2="790" y2="86" stroke="var(--rule)" stroke-width="1" marker-end="url(#ar2)"/>
+  <text x="560" y="78" text-anchor="middle" font-size="11.5" fill="var(--ink-faint)">nothing — same walk, as a state machine</text>
+  <rect x="796" y="44" width="300" height="84" rx="4" fill="var(--logic-bg)" stroke="var(--logic)"/>
+  <text x="810" y="66" font-size="11.5" class="mono" fill="var(--logic)">hdr_parse.sv</text>
+  <text x="810" y="88" font-size="12.5" fill="var(--ink-soft)">byte counter + small FSM</text>
+  <text x="810" y="106" font-size="12.5" fill="var(--ink-soft)">skips 14 or 18, then 20, 8, 20</text>
+  <text x="810" y="122" font-size="12.5" fill="var(--ink-soft)">registers the sequence number</text>
+
+  <!-- row 2 -->
+  <rect x="20" y="148" width="300" height="84" rx="4" fill="var(--sw-bg)" stroke="var(--rule-strong)"/>
+  <text x="34" y="170" font-size="11.5" class="mono" fill="var(--ink-faint)">2  frame</text>
+  <text x="34" y="192" font-size="12.5" class="mono">n = read(2)</text>
+  <text x="34" y="210" font-size="12.5" class="mono">msg = read(n)</text>
+  <text x="34" y="226" font-size="11.5" fill="var(--ink-faint)">6 lines; read() blocks</text>
+  <line x1="324" y1="190" x2="790" y2="190" stroke="var(--rule)" stroke-width="1" marker-end="url(#ar2)"/>
+  <text x="560" y="182" text-anchor="middle" font-size="11.5" fill="var(--warn)">the luxury of blocking</text>
+  <rect x="796" y="148" width="300" height="84" rx="4" fill="var(--logic-bg)" stroke="var(--logic)"/>
+  <text x="810" y="170" font-size="11.5" class="mono" fill="var(--logic)">msg_frame.sv &nbsp;← hardest</text>
+  <text x="810" y="192" font-size="12.5" fill="var(--ink-soft)">barrel shifter + leftover register</text>
+  <text x="810" y="210" font-size="12.5" fill="var(--ink-soft)">a message may start at any byte</text>
+  <text x="810" y="226" font-size="12.5" fill="var(--ink-soft)">of a beat and straddle into the next</text>
+
+  <!-- row 3 -->
+  <rect x="20" y="252" width="300" height="84" rx="4" fill="var(--sw-bg)" stroke="var(--rule-strong)"/>
+  <text x="34" y="274" font-size="11.5" class="mono" fill="var(--ink-faint)">3  decode</text>
+  <text x="34" y="296" font-size="12.5" class="mono">struct.unpack(</text>
+  <text x="34" y="314" font-size="12.5" class="mono">&nbsp;&nbsp;"&gt;cHH6sQcI8sI", msg)</text>
+  <text x="34" y="330" font-size="11.5" fill="var(--ink-faint)">one call per message</text>
+  <line x1="324" y1="294" x2="790" y2="294" stroke="var(--rule)" stroke-width="1" marker-end="url(#ar2)"/>
+  <text x="560" y="286" text-anchor="middle" font-size="11.5" fill="var(--vendor)">hardware wins — all fields at once</text>
+  <rect x="796" y="252" width="300" height="84" rx="4" fill="var(--logic-bg)" stroke="var(--logic)"/>
+  <text x="810" y="274" font-size="11.5" class="mono" fill="var(--logic)">decode.sv</text>
+  <text x="810" y="296" font-size="12.5" fill="var(--ink-soft)">fixed bit slices, zero logic</text>
+  <text x="810" y="314" font-size="12.5" fill="var(--ink-soft)">every field extracted the SAME cycle</text>
+  <text x="810" y="330" font-size="12.5" fill="var(--ink-soft)">it is literally just wires</text>
+
+  <!-- row 4 -->
+  <rect x="20" y="356" width="300" height="104" rx="4" fill="var(--sw-bg)" stroke="var(--rule-strong)"/>
+  <text x="34" y="378" font-size="11.5" class="mono" fill="var(--ink-faint)">4  look up</text>
+  <text x="34" y="400" font-size="13" class="mono">self.orders[ref]</text>
+  <text x="34" y="422" font-size="11.5" fill="var(--ink-soft)">• unlimited size</text>
+  <text x="34" y="438" font-size="11.5" fill="var(--ink-soft)">• grows on demand, rehashes</text>
+  <text x="34" y="454" font-size="11.5" fill="var(--ink-soft)">• chains on collision</text>
+  <line x1="324" y1="400" x2="790" y2="400" stroke="var(--mem)" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <text x="560" y="392" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--warn)">unbounded capacity</text>
+  <text x="560" y="420" text-anchor="middle" font-size="11" fill="var(--ink-faint)">you must measure the peak</text>
+  <text x="560" y="435" text-anchor="middle" font-size="11" fill="var(--ink-faint)">and pick a depth forever</text>
+  <rect x="796" y="356" width="300" height="104" rx="4" fill="var(--mem-bg)" stroke="var(--mem)"/>
+  <text x="810" y="378" font-size="11.5" class="mono" fill="var(--mem)">order_table.sv</text>
+  <text x="810" y="400" font-size="13" class="mono">addr = hash(ref)</text>
+  <text x="810" y="422" font-size="11.5" fill="var(--ink-soft)">• fixed depth, set at synthesis</text>
+  <text x="810" y="438" font-size="11.5" fill="var(--ink-soft)">• collision = a lost order</text>
+  <text x="810" y="454" font-size="11.5" fill="var(--ink-soft)">• read costs a cycle → forwarding</text>
+
+  <!-- row 5 -->
+  <rect x="20" y="480" width="300" height="104" rx="4" fill="var(--sw-bg)" stroke="var(--rule-strong)"/>
+  <text x="34" y="502" font-size="11.5" class="mono" fill="var(--ink-faint)">5  update + select</text>
+  <text x="34" y="524" font-size="13" class="mono">self.bids[px] += qty</text>
+  <text x="34" y="544" font-size="13" class="mono">max(self.bids)</text>
+  <text x="34" y="566" font-size="11.5" fill="var(--warn)">← cost depends on the data</text>
+  <line x1="324" y1="524" x2="790" y2="524" stroke="var(--mem)" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <text x="560" y="516" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--vendor)">you GAIN fixed latency</text>
+  <text x="560" y="544" text-anchor="middle" font-size="11" fill="var(--ink-faint)">this is the whole point of</text>
+  <text x="560" y="559" text-anchor="middle" font-size="11" fill="var(--ink-faint)">the exercise</text>
+  <rect x="796" y="480" width="300" height="104" rx="4" fill="var(--mem-bg)" stroke="var(--mem)"/>
+  <text x="810" y="502" font-size="11.5" class="mono" fill="var(--mem)">price_levels.sv + priority_encoder.sv</text>
+  <text x="810" y="524" font-size="12.5" class="mono">qty_ram[4096], bitmap[4096]</text>
+  <text x="810" y="546" font-size="11.5" fill="var(--ink-soft)">best bid = highest set bit</text>
+  <text x="810" y="562" font-size="11.5" fill="var(--ink-soft)">64×64 encoder: 1–2 cycles, ALWAYS</text>
+  <text x="810" y="578" font-size="11.5" fill="var(--ink-soft)">regardless of the book's shape</text>
+</svg>
+</div>
+<figcaption>Rows 1–3 are close translations. Rows 4 and 5 are substitutions that change
+what the machine can do: a dict holds any number of orders, a block RAM does not, so the
+design has a capacity past which it is simply wrong.</figcaption>
+</figure>
+
+<div class="callout warn">
+<p><strong>The one property that matters most.</strong> <code>max(self.bids)</code>
+walks every live price level, so its cost depends on what the book looks like.
+A market data feed cannot be told to slow down — there is no flow control, and a
+dropped message means a permanently wrong book. Variable latency is therefore not
+merely undesirable, it is disqualifying.</p>
+<p>The bitmap and priority encoder give the same answer in a fixed one or two cycles
+whether the book has three price levels or three thousand. Trading flexibility for
+predictability, on purpose, is most of what hardware design is.</p>
+</div>
+
+<!-- ==================================================================== -->
+<h2><span class="num">03 — THE RTL</span>The modules you actually write</h2>
+<p class="sub">Seven modules and a top level. Every one has the same shape: stream in,
+stream out, <code>valid</code> with <strong>no <code>ready</code></strong> — because
+nothing in this pipeline is permitted to say "wait".</p>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 1120 470" role="img" aria-label="RTL module block diagram with AXI-Stream signals">
+  <defs>
+    <marker id="ar3" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="var(--logic)"/>
+    </marker>
+    <marker id="ar3m" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="var(--mem)"/>
+    </marker>
+  </defs>
+
+  <!-- top-level boundary -->
+  <rect x="86" y="64" width="946" height="270" rx="6" fill="none" stroke="var(--rule-strong)" stroke-width="1.5"/>
+  <text x="100" y="84" font-size="12" class="mono" fill="var(--ink-faint)">feed_handler_top.sv</text>
+
+  <!-- input bus -->
+  <text x="14" y="150" font-size="12" class="mono" fill="var(--ink-soft)">AXI-Stream</text>
+  <text x="14" y="167" font-size="11" class="mono" fill="var(--ink-faint)">tdata[63:0]</text>
+  <text x="14" y="182" font-size="11" class="mono" fill="var(--ink-faint)">tkeep[7:0]</text>
+  <text x="14" y="197" font-size="11" class="mono" fill="var(--ink-faint)">tvalid, tlast</text>
+  <text x="14" y="216" font-size="11" class="mono" fill="var(--warn)">no tready</text>
+  <line x1="62" y1="130" x2="82" y2="130" stroke="var(--logic)" stroke-width="2" marker-end="url(#ar3)"/>
+
+  <!-- modules row -->
+  <rect x="100" y="100" width="136" height="62" rx="4" fill="var(--logic-bg)" stroke="var(--logic)" stroke-width="1.3"/>
+  <text x="168" y="126" text-anchor="middle" font-size="12.5" class="mono" font-weight="600">hdr_parse</text>
+  <text x="168" y="146" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">step 4</text>
+
+  <line x1="236" y1="130" x2="262" y2="130" stroke="var(--logic)" stroke-width="2" marker-end="url(#ar3)"/>
+  <rect x="266" y="100" width="136" height="62" rx="4" fill="var(--logic-bg)" stroke="var(--logic)" stroke-width="1.3"/>
+  <text x="334" y="126" text-anchor="middle" font-size="12.5" class="mono" font-weight="600">msg_frame</text>
+  <text x="334" y="146" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">step 5 — barrel shifter</text>
+
+  <line x1="402" y1="130" x2="428" y2="130" stroke="var(--logic)" stroke-width="2" marker-end="url(#ar3)"/>
+  <rect x="432" y="100" width="120" height="62" rx="4" fill="var(--logic-bg)" stroke="var(--logic)" stroke-width="1.3"/>
+  <text x="492" y="126" text-anchor="middle" font-size="12.5" class="mono" font-weight="600">decode</text>
+  <text x="492" y="146" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">step 6</text>
+
+  <line x1="552" y1="130" x2="578" y2="130" stroke="var(--mem)" stroke-width="2" marker-end="url(#ar3m)"/>
+  <rect x="582" y="100" width="142" height="62" rx="4" fill="var(--mem-bg)" stroke="var(--mem)" stroke-width="1.3"/>
+  <text x="653" y="126" text-anchor="middle" font-size="12.5" class="mono" font-weight="600">order_table</text>
+  <text x="653" y="146" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">step 7</text>
+
+  <line x1="724" y1="130" x2="750" y2="130" stroke="var(--mem)" stroke-width="2" marker-end="url(#ar3m)"/>
+  <rect x="754" y="100" width="142" height="62" rx="4" fill="var(--mem-bg)" stroke="var(--mem)" stroke-width="1.3"/>
+  <text x="825" y="126" text-anchor="middle" font-size="12.5" class="mono" font-weight="600">price_levels</text>
+  <text x="825" y="146" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">step 8</text>
+
+  <line x1="896" y1="130" x2="1028" y2="130" stroke="var(--mem)" stroke-width="2" marker-end="url(#ar3m)"/>
+  <text x="1036" y="118" font-size="11.5" class="mono" fill="var(--ink-soft)">bbo_valid</text>
+  <text x="1036" y="134" font-size="11" class="mono" fill="var(--ink-faint)">bid_px/qty</text>
+  <text x="1036" y="149" font-size="11" class="mono" fill="var(--ink-faint)">ask_px/qty</text>
+
+  <!-- attached blocks below -->
+  <line x1="653" y1="162" x2="653" y2="212" stroke="var(--mem)" stroke-width="1.3" marker-end="url(#ar3m)"/>
+  <rect x="566" y="214" width="174" height="58" rx="4" fill="var(--surface)" stroke="var(--mem)" stroke-dasharray="3 3"/>
+  <text x="653" y="236" text-anchor="middle" font-size="11.5" class="mono">BRAM</text>
+  <text x="653" y="254" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">{tag, side, price, qty}</text>
+  <text x="653" y="268" text-anchor="middle" font-size="10" fill="var(--ink-faint)">depth from sizing.py</text>
+
+  <line x1="825" y1="162" x2="825" y2="212" stroke="var(--mem)" stroke-width="1.3" marker-end="url(#ar3m)"/>
+  <rect x="748" y="214" width="174" height="58" rx="4" fill="var(--surface)" stroke="var(--mem)" stroke-dasharray="3 3"/>
+  <text x="835" y="236" text-anchor="middle" font-size="11.5" class="mono">priority_encoder</text>
+  <text x="835" y="254" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">64 groups × 64 bits</text>
+  <text x="835" y="268" text-anchor="middle" font-size="10" fill="var(--ink-faint)">fixed latency</text>
+
+  <!-- sideband -->
+  <line x1="168" y1="162" x2="168" y2="296" stroke="var(--ink-faint)" stroke-width="1.1" stroke-dasharray="4 3"/>
+  <line x1="168" y1="296" x2="1028" y2="296" stroke="var(--ink-faint)" stroke-width="1.1" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
+  <text x="500" y="290" font-size="11" class="mono" fill="var(--ink-faint)">sideband: MoldUDP64 sequence number → gap detection</text>
+
+  <!-- status registers -->
+  <rect x="100" y="214" width="300" height="58" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-dasharray="3 3"/>
+  <text x="250" y="236" text-anchor="middle" font-size="11.5" class="mono">status registers</text>
+  <text x="250" y="254" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">collisions, out-of-band, seq gaps</text>
+  <text x="250" y="268" text-anchor="middle" font-size="10" fill="var(--ink-faint)">the hardware form of raise BookError</text>
+
+  <!-- verification note -->
+  <text x="100" y="368" font-size="12.5" font-weight="600">Every module is tested the same way:</text>
+  <text x="100" y="390" font-size="12.5" fill="var(--ink-soft)">cocotb drives it from Python, and the same Python computes the expected answer with</text>
+  <text x="100" y="408" font-size="12.5" fill="var(--ink-soft)">the golden model — in the same process, so there are no files to marshal and no</text>
+  <text x="100" y="426" font-size="12.5" fill="var(--ink-soft)">chance of the two drifting apart.</text>
+  <text x="100" y="452" font-size="12" class="mono" fill="var(--logic)">hdr_parse ↔ depacketize() &nbsp;·&nbsp; msg_frame ↔ read_messages() &nbsp;·&nbsp; decode ↔ decode() &nbsp;·&nbsp; order_table + price_levels ↔ Book</text>
+</svg>
+</div>
+</figure>
+
+<div class="legend">
+  <span><i class="swatch" style="background:var(--logic)"></i> stateless datapath</span>
+  <span><i class="swatch" style="background:var(--mem)"></i> holds memory</span>
+  <span><i class="swatch" style="background:var(--sw)"></i> software</span>
+  <span><i class="swatch" style="background:var(--vendor)"></i> vendor IP</span>
+</div>
+
+<!-- ==================================================================== -->
+<h2><span class="num">04 — IP BLOCKS</span>Do you need to make them? Mostly no</h2>
+<p class="sub">"IP block" means two different things, and conflating them is the usual
+source of confusion.</p>
+
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 1120 330" role="img" aria-label="Board level diagram showing which parts are vendor IP and which you write">
+  <defs>
+    <marker id="ar4" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="var(--rule-strong)"/>
+    </marker>
+  </defs>
+
+  <!-- physical -->
+  <rect x="20" y="96" width="110" height="70" rx="4" fill="var(--surface)" stroke="var(--rule-strong)"/>
+  <text x="75" y="126" text-anchor="middle" font-size="12.5">SFP+ cage</text>
+  <text x="75" y="145" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)">physical</text>
+  <line x1="130" y1="131" x2="158" y2="131" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#ar4)"/>
+
+  <!-- vendor IP -->
+  <rect x="162" y="90" width="196" height="82" rx="4" fill="var(--vendor-bg)" stroke="var(--vendor)" stroke-width="1.5"/>
+  <text x="260" y="116" text-anchor="middle" font-size="13" font-weight="600">10G Ethernet</text>
+  <text x="260" y="134" text-anchor="middle" font-size="13" font-weight="600">Subsystem</text>
+  <text x="260" y="154" text-anchor="middle" font-size="10.5" fill="var(--vendor)">VENDOR IP — never write this</text>
+  <text x="260" y="168" text-anchor="middle" font-size="10" fill="var(--ink-faint)">MAC + PHY, ships with Vivado</text>
+
+  <!-- the boundary -->
+  <line x1="380" y1="40" x2="380" y2="290" stroke="var(--warn)" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="388" y="56" font-size="11.5" font-weight="600" fill="var(--warn)">verification boundary</text>
+  <text x="388" y="72" font-size="10.5" fill="var(--ink-soft)">cocotb drives AXI-Stream here</text>
+
+  <line x1="358" y1="131" x2="428" y2="131" stroke="var(--logic)" stroke-width="2" marker-end="url(#ar4)"/>
+  <text x="393" y="122" font-size="9.5" class="mono" fill="var(--logic)">64b AXIS</text>
+
+  <!-- your design -->
+  <rect x="432" y="80" width="420" height="102" rx="5" fill="var(--logic-bg)" stroke="var(--logic)" stroke-width="2"/>
+  <text x="642" y="108" text-anchor="middle" font-size="14" font-weight="600">YOUR FEED HANDLER</text>
+  <text x="642" y="130" text-anchor="middle" font-size="11.5" class="mono" fill="var(--ink-soft)">hdr_parse · msg_frame · decode</text>
+  <text x="642" y="148" text-anchor="middle" font-size="11.5" class="mono" fill="var(--ink-soft)">order_table · price_levels</text>
+  <text x="642" y="170" text-anchor="middle" font-size="10.5" fill="var(--logic)">plain SystemVerilog. this IS the project.</text>
+
+  <line x1="852" y1="131" x2="906" y2="131" stroke="var(--logic)" stroke-width="2" marker-end="url(#ar4)"/>
+  <rect x="910" y="96" width="180" height="70" rx="4" fill="var(--surface)" stroke="var(--rule-strong)"/>
+  <text x="1000" y="122" text-anchor="middle" font-size="12.5">BBO consumer</text>
+  <text x="1000" y="141" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)">strategy logic, or a</text>
+  <text x="1000" y="155" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)">host via DMA</text>
+
+  <!-- annotation band -->
+  <rect x="432" y="212" width="420" height="84" rx="4" fill="none" stroke="var(--rule)" stroke-dasharray="4 4"/>
+  <text x="642" y="234" text-anchor="middle" font-size="12" font-weight="600">Steps 4–9 need none of the above</text>
+  <text x="642" y="254" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">Verilator + cocotb drive the AXI-Stream port directly.</text>
+  <text x="642" y="272" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">No Vivado, no block design, no board.</text>
+  <text x="642" y="290" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">Step 10 synthesises these modules out-of-context.</text>
+
+  <text x="20" y="234" font-size="11.5" font-weight="600" fill="var(--vendor)">Only needed for</text>
+  <text x="20" y="250" font-size="11.5" font-weight="600" fill="var(--vendor)">real hardware:</text>
+  <text x="20" y="270" font-size="11" fill="var(--ink-soft)">· Ethernet subsystem</text>
+  <text x="20" y="285" font-size="11" fill="var(--ink-soft)">· Clocking Wizard</text>
+  <text x="20" y="300" font-size="11" fill="var(--ink-soft)">· AXI-Lite interconnect</text>
+</svg>
+</div>
+</figure>
+
+<h3>The two meanings</h3>
+<div class="wide-table">
+<table>
+  <thead><tr><th>Sense</th><th>What it is</th><th>Do you need it?</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>a reusable module</td>
+      <td>A module with standard interfaces that does one job and can be dropped into
+      another design. You get this by writing clean SystemVerilog with AXI-Stream ports.</td>
+      <td><strong>Yes — and you already are.</strong> Every module in the diagram above
+      qualifies. This is what an interviewer means by "my parser IP".</td>
+    </tr>
+    <tr>
+      <td>a Vivado package</td>
+      <td>An <code>.xci</code> with a GUI customisation dialog, draggable into IP
+      Integrator's block design canvas.</td>
+      <td><strong>No.</strong> That is packaging, not design. Useful for assembling big
+      systems from many pieces; pointless when building and measuring one datapath.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+<p><strong>Why the verification boundary sits where it does.</strong> The design is
+tested at the AXI-Stream port — exactly where a real MAC would hand bytes over. That
+keeps every interesting part testable with no board and no vendor IP, while the
+interface stays the real one, so the work would drop straight into a physical design.</p>
+<p>Optional polish for the very end: package the top level as IP with
+<code>ipx::package_project</code>. An afternoon's work, it proves you understand
+interface inference and AXI conventions, and it reads well in a write-up. Never before
+the logic is measured.</p>
+</div>
+
+<!-- ==================================================================== -->
+<h2><span class="num">05 — WORKED EXAMPLE</span>One cancel message, end to end</h2>
+<p class="sub">An Order Cancel (<code>X</code>) is 23 bytes and contains almost no
+information. Following one through shows why the design looks the way it does.</p>
+
+<div class="journey">
+<ol>
+  <li><div><b>1526 bytes arrive as 191 AXI-Stream beats</b>
+    <div class="detail">Eight bytes per clock, one beat every cycle. Nothing can be asked
+    to pause.</div></div></li>
+  <li><div><b>hdr_parse skips 62 bytes of headers</b>
+    <div class="detail">14 Ethernet + 20 IPv4 + 8 UDP + 20 MoldUDP64. The IPv4 header
+    length is read <em>from the packet</em>, and a VLAN tag would shift everything by 4 —
+    hard-code the offset and every field downstream lands wrong.</div>
+    <div class="detail">The MoldUDP64 sequence number goes out as sideband so gaps can be
+    detected: <code>prev_seq + prev_count == this_seq</code>.</div></div></li>
+  <li><div><b>msg_frame finds this message starts at byte 3 of a beat</b>
+    <div class="detail">It reads the 2-byte length (23), then barrel-shifts the message so
+    it begins at bit 0 — pulling the tail out of the <em>next</em> beat, because a 23-byte
+    message starting at offset 3 straddles the boundary. This is the hardest module in the
+    project.</div></div></li>
+  <li><div><b>decode slices out the fields, all in one cycle</b>
+    <div class="bytes">58 · 000e · 0000 · 0a4a4c8f2b31 · 000000000004f2a1 · 00000064</div>
+    <div class="detail"><code>X</code>, locate 14 (AAPL today), tracking 0, timestamp,
+    order reference 324769, 100 shares cancelled. No side. No price. No symbol.</div></div></li>
+  <li><div><b>order_table looks up reference 324769 — the unavoidable wait</b>
+    <div class="detail">Hash it to an address, read the BRAM, compare the stored tag to
+    confirm this entry really is order 324769 and not a collision. The read costs a cycle,
+    so a message arriving right behind this one needs read-during-write forwarding to see
+    the updated value.</div>
+    <div class="detail">Out comes what the message never said: <em>buy, $153.42</em>.</div></div></li>
+  <li><div><b>price_levels subtracts 100 at tick $153.42</b>
+    <div class="detail">If that level hits zero, its bit clears in the 4096-bit bitmap.</div></div></li>
+  <li><div><b>priority_encoder finds the new best bid</b>
+    <div class="detail">Highest set bit in the bid bitmap, via 64 groups of 64 bits. One to
+    two cycles, the same whether the book has three levels or three thousand — which is the
+    property the whole design exists to have.</div></div></li>
+  <li><div><b>BBO out</b>
+    <div class="detail">Measured from the message's final byte to the updated BBO, this is
+    the latency number that step 10 reports. It replaces "low latency" on a résumé with a
+    figure you can defend.</div></div></li>
+</ol>
+</div>
+
+<div class="callout">
+<p><strong>The whole design in one observation.</strong> That cancel message carried an
+order number and a share count. Everything else the book needed — which side, which
+price, which symbol — had to come out of a memory holding state from earlier in the day.</p>
+<p>That is why there is an order table, why its read latency sits on the critical path of
+every single message, why a hash collision means silently losing an order, and why
+<code>model/sizing.py</code> measures the peak number of live orders before a line of
+that module gets written.</p>
+</div>
+
+</main>

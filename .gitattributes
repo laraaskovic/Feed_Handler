@@ -1,2 +1,16 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Files consumed by Linux tools must keep LF even when checked out on Windows:
+# a CRLF shebang fails inside WSL with "bad interpreter: /bin/bash^M".
+*.sh   text eol=lf
+*.py   text eol=lf
+*.lua  text eol=lf
+*.sv   text eol=lf
+*.svh  text eol=lf
+Makefile text eol=lf
+
+# Captures and market data are binary; never let git touch them.
+*.pcap binary
+*.itch binary
+*.gz   binary
