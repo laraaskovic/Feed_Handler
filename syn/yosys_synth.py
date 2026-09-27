@@ -128,6 +128,44 @@ def parse_sta(text: str) -> float | None:
     return round(int(m.group(1)) / 1000, 2) if m else None
 
 
+def parse_sta_path(text: str) -> list[str]:
+    """The worst path itself, exactly as `sta` prints it.
+
+    `sta` follows "Latest arrival time ... is N:" with one indented line per
+    hop, destination first, walking back to the clock. That block is the
+    answer to "show me the timing": it names the cell, the pin-to-pin arc and
+    the cumulative picoseconds at each step, so the module and the source
+    line that cost the most are readable straight off it.
+    """
+    lines = text.splitlines()
+    start = next((n for n, l in enumerate(lines)
+                  if l.startswith("Latest arrival time")), None)
+    if start is None:
+        return []
+    out = [lines[start]]
+    for l in lines[start + 1:]:
+        # The block ends at the blank line before the arrival histogram.
+        if not l.startswith(" "):
+            break
+        out.append(l.rstrip())
+    return out
+
+
+def fmax(logic_ns: float | None) -> tuple[float, float] | None:
+    """Fmax band in MHz from a logic-only delay, as (optimistic, working).
+
+    Yosys `sta` counts cell delay only - nothing is placed, so no wire has a
+    length yet. 1/logic gives the frequency this design could reach if routing
+    were free, which is a hard upper bound and nothing more. The working
+    number assumes routing is about half of a real path, the usual FPGA rule
+    of thumb, so the real period is roughly twice the logic delay. A signed-off
+    Fmax lies between the two and comes from Vivado, not from here.
+    """
+    if not logic_ns:
+        return None
+    return round(1000.0 / logic_ns, 1), round(500.0 / logic_ns, 1)
+
+
 def parse_ltp(text: str) -> int | None:
     """Logic levels from `ltp`: 'Longest topological path ... (length=N)'."""
     m = re.search(r"length=(\d+)", text)
@@ -171,7 +209,10 @@ def run(top: str) -> dict:
         raise RuntimeError(f"yosys failed on {top}:\n{tail}")
     res = parse_stat((ROOT / f"{log_rel}.stat").read_text())
     res["levels"] = parse_ltp((ROOT / f"{log_rel}.ltp").read_text())
-    res["logic_ns"] = parse_sta((ROOT / f"{log_rel}.sta").read_text())
+    sta_text = (ROOT / f"{log_rel}.sta").read_text()
+    res["logic_ns"] = parse_sta(sta_text)
+    res["path"] = parse_sta_path(sta_text)
+    res["fmax"] = fmax(res["logic_ns"])
     res["seconds"] = round(time.time() - t0, 1)
     return res
 
@@ -197,14 +238,30 @@ def write_summary(results: dict[str, dict]) -> Path:
         "`syn/vivado/ooc_synth.tcl` on an UltraScale+ part, which is faster",
         "than the 7-series models used here.",
         "",
-        "| module | what | " + " | ".join(cols) + " | levels | logic ns |",
-        "|---|---|" + "---|" * len(cols) + "---|---|",
+        "**Fmax** is that same number as a frequency, given as a band:",
+        "`1/logic` is the ceiling with routing free, `1/(2 x logic)` is the",
+        "working estimate with routing at half the path. The real answer sits",
+        "between the two; the target is 156.25 MHz.",
+        "",
+        "| module | what | " + " | ".join(cols)
+        + " | levels | logic ns | Fmax MHz (ceiling / est) |",
+        "|---|---|" + "---|" * len(cols) + "---|---|---|",
     ]
     for top, r in results.items():
         # One row per module, in pipeline order.
+        f = r.get("fmax")
+        band = f"{f[0]} / {f[1]}" if f else "-"
         lines.append(f"| `{top}` | {MODULES[top]} | "
                      + " | ".join(str(r[c]) for c in cols)
-                     + f" | {r['levels']} | {r['logic_ns']} |")
+                     + f" | {r['levels']} | {r['logic_ns']} | {band} |")
+    # The critical path of each module, verbatim from `sta`: the evidence
+    # behind the Fmax column, and the first thing to read when a module is
+    # too slow. Each line is one hop, destination first, walking back to the
+    # clock, with the cumulative picoseconds in the left column.
+    lines += ["", "## Critical path per module", ""]
+    for top, r in results.items():
+        lines += [f"### `{top}`", "", "```"] + (
+            r.get("path") or ["(no path reported)"]) + ["```", ""]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
@@ -213,6 +270,8 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("which", nargs="*", help="modules (default: all)")
+    p.add_argument("--paths", action="store_true",
+                   help="print each module's critical path as `sta` reports it")
     a = p.parse_args()
     names = a.which or list(MODULES)
     # Reject typos before spending minutes synthesising the rest.
@@ -226,10 +285,15 @@ def main() -> int:
         print(f"synthesising {n} ...", flush=True)
         results[n] = run(n)
         r = results[n]
+        f = r.get("fmax")
+        band = f"Fmax {f[1]}-{f[0]} MHz" if f else "Fmax n/a"
         print(f"  LUT {r['LUT']}  FF {r['FF']}  BRAM36 {r['BRAM36']}  "
               f"BRAM18 {r['BRAM18']}  DSP {r['DSP']}  levels {r['levels']}  "
-              f"logic {r['logic_ns']} ns  "
+              f"logic {r['logic_ns']} ns  {band}  "
               f"({r['seconds']} s)", flush=True)
+        # The path is a dozen lines; print it only when asked for.
+        if a.paths and r.get("path"):
+            print("\n".join("    " + l for l in r["path"]), flush=True)
     # Only a full run rewrites the committed summary, so a quick one-module
     # check never leaves it half-populated.
     if not a.which:
