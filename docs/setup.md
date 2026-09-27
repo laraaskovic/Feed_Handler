@@ -39,7 +39,7 @@ turned on in your BIOS/UEFI (usually called SVM on AMD, VT-x on Intel).
 From the Ubuntu shell:
 
 ```bash
-cd /mnt/c/Users/laraa/Documents/GitHub/Feed_Handler
+cd /mnt/c/Users/<you>/Feed_Handler      # wherever you cloned it
 bash tools/setup-sim.sh
 ```
 
@@ -85,8 +85,9 @@ Linux (where Verilator lives) while the editing experience stays on Windows.
 
 - **Wireshark / tshark** — `tools/check_pcap.py` runs on the Windows side. No
   reason to install Wireshark twice.
-- **Vivado** — step 10 only. Install the free edition when you get there, and
-  pick a device that edition supports.
+- **Vivado** — step 10 only. Install steps (which installer, which devices)
+  are in the README, §11 *Synthesis setup*.
+- **Quartus** — optional, for routed timing on Intel parts; see README §8.
 
 ## Line endings
 

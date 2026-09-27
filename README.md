@@ -1026,6 +1026,45 @@ edition.
 **This flow has not been run yet** — see [§12](#12-status-and-what-is-deliberately-not-done).
 It needs an x86-64 machine with Vivado installed, and produces the only numbers
 that count as a signed-off Fmax.
+
+### `quartus/build.tcl`, `sta.tcl`, `run.sh`, `ooc.sdc` — routed timing on Intel parts
+
+The same out-of-context idea for machines that have Quartus instead of Vivado
+(the default target is the Cyclone V on a DE1-SoC, `5CSEMA5F31C6`). Tested with
+Quartus Prime Lite 18.1 on Windows, from Git Bash:
+
+```bash
+export PATH="/c/intelFPGA_lite/18.1/quartus/bin64:$PATH"   # adjust to your install
+./syn/quartus/run.sh                  # price_levels, hdr_parse, msg_frame, decode
+./syn/quartus/run.sh hdr_parse        # one module
+```
+
+Each module gets a full project in `syn/out/quartus/<module>/`; open its `.qpf`
+in the Quartus GUI to browse the RTL Viewer, Chip Planner and Timing Analyzer.
+One line per module is appended to `syn/out/quartus/results.txt`:
+
+| Field | Meaning |
+|---|---|
+| `FMAX_CORE` | register-to-register Fmax — **the number to quote** |
+| `WNS_CORE` | slack at 6.4 ns that `FMAX_CORE` comes from; positive = timing met |
+| `WNS_ALL` | worst slack over every path, ports included |
+| `FMAX_REPORTED` | Quartus's own Fmax summary, which includes port paths |
+
+Why the core number: Quartus has no out-of-context mode, so `build.tcl` makes
+every port except `clk` a *virtual pin*. The I/O budget in `ooc.sdc` is
+referenced to an ideal clock, while the registers behind the ports see ~4 ns
+of real clock-tree delay — so a register driving an output through *zero*
+logic still shows ~-2.5 ns. That measures the constraint, not the design.
+`timing_core.rpt` holds the ten worst register-to-register paths in full.
+
+Quartus Standard/Lite parses less SystemVerilog than Verilator or Vivado:
+generate blocks need explicit `generate`/`endgenerate` and a separately
+declared `genvar`. The RTL is written that way so all three tools accept it.
+
+A Cyclone V is a low-cost 28 nm part, much slower than the Kintex UltraScale+
+the design targets, so failing 156.25 MHz here does not by itself mean failing
+on the real part. It does find genuinely long paths cheaply — see
+[§10](#10-results-latency-area-timing).
 ---
 
 ## 9. How we check it works
@@ -1383,16 +1422,20 @@ a full-day download, a single-symbol extract, or synthetic data.
 One-time, inside WSL:
 
 ```bash
-bash tools/setup-sim.sh          # verilator, gtkwave, venv, cocotb
-# or, if only the venv is missing:
+bash tools/setup-sim.sh          # verilator, gtkwave, venv in ~/.venvs/itch
+# or, if only the venv is missing, a repo-local one:
 python3 -m venv .venv && .venv/bin/pip install cocotb cocotbext-axi pytest
 ```
 
-Then:
+Then, inside WSL, with whichever venv you made:
 
 ```bash
-wsl .venv/bin/python tb/run.py
+source ~/.venvs/itch/bin/activate && python tb/run.py   # setup-sim.sh venv
+.venv/bin/python tb/run.py                              # repo-local venv
 ```
+
+The `wsl .venv/bin/python ...` commands elsewhere in this README assume the
+repo-local venv.
 
 ### Synthesis setup
 
@@ -1400,6 +1443,36 @@ wsl .venv/bin/python tb/run.py
 pip install yowasp-yosys         # Yosys as a WebAssembly build, any platform
 python syn/yosys_synth.py
 ```
+
+**Quartus** — any Quartus Prime Lite/Standard with Cyclone V support; see
+[§8](#8-file-by-file-synthesis-syn) for the commands.
+
+**Vivado** (x86-64 Windows or Linux; the scripts target a Kintex UltraScale+
+KU5P):
+
+1. From AMD's *Adaptive SoCs & FPGA Design Tools Downloads* page, download the
+   **Unified Installer — Windows Self Extracting Web Installer** (~290 MB
+   `.exe`). Click the file title itself; *Digest*, *Signature* and *Public
+   Key* are only for verifying the download. An AMD account and a short
+   export-compliance form are required.
+2. Product: **Vivado** (not Vitis). Edition / license tier: the no-cost one.
+   From 2026.1 AMD moved to tiered licensing — check that the free tier lists
+   Kintex UltraScale+; if not, use 2025.x from the *Version* dropdown, whose
+   free *Vivado ML Standard* edition includes the KU5P.
+3. Devices: tick **Kintex UltraScale+** (optionally **Artix-7** as a small
+   fallback) and untick everything else — Versal, Zynq, Virtex, Spartan.
+   Untick Vitis and Power Design Manager. This keeps the install to roughly
+   20-40 GB instead of 100+.
+4. Open the **Vivado Tcl Shell** from the Start menu, then:
+
+   ```tcl
+   cd C:/Users/<you>/Feed_Handler
+   vivado -mode batch -source syn/vivado/ooc_synth.tcl -tclargs hdr_parse
+   vivado -mode batch -source syn/vivado/run_all.tcl       # every module
+   ```
+
+   Results land in `syn/out/vivado/`. With 8 GB of RAM, close other
+   applications; `order_table` is the heavy one.
 
 ### Using the real data
 
@@ -1438,7 +1511,7 @@ from**.
 | 7 | Order table in BRAM (hashed, set-associative, stash) | done — 16 tests |
 | 8 | Price-level table, bitmap + priority encoder to BBO | done — 18 tests |
 | 9 | Integration, real-data replay, fixed-latency measurement | done — 7 tests |
-| 10 | Synthesis | **Yosys: done. Vivado sign-off: not run** |
+| 10 | Synthesis | **Yosys: done. Quartus (Cyclone V): runs, partial results. Vivado sign-off: not run** |
 
 **All eleven RTL files are complete and wired together.** There is no stub, no
 `TODO`, and no unimplemented path in `rtl/`.
