@@ -91,17 +91,30 @@ set_global_assignment -name SDC_FILE [file join $here ooc.sdc]
 # The RTL uses packages, typed enums and `default_nettype. Files added as
 # SYSTEMVERILOG_FILE already parse as SV; this pins the dialect explicitly so
 # the result does not depend on the install's default.
-set_global_assignment -name SYSTEMVERILOG_INPUT_VERSION SYSTEMVERILOG_2005
+set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 # Chase frequency rather than area - the comparable setting to Vivado's
 # default synthesis strategy plus phys_opt_design.
 set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
 set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 
 # --- out-of-context ports -----------------------------------------------------
-# See the header: every port virtual, except the clock.
-set_instance_assignment -name VIRTUAL_PIN ON  -to *
-set_instance_assignment -name VIRTUAL_PIN OFF -to clk
-
+# See the header: every port virtual, except the clock. A wildcard ON plus a
+# specific OFF for clk does NOT work - Quartus 18.1 still virtualises clk and
+# warns "clock port is fed by virtual pin", which makes every timing number
+# meaningless. So elaborate first to learn the port names, then assign each
+# non-clock port explicitly.
+export_assignments
+puts "== build: elaborating to enumerate ports"
+execute_module -tool map -args "--analysis_and_elaboration"
+set nvpin 0
+foreach_in_collection p [get_names -filter * -node_type pin] {
+    set name [get_name_info -info full_path $p]
+    if {$name ne "clk"} {
+        set_instance_assignment -name VIRTUAL_PIN ON -to $name
+        incr nvpin
+    }
+}
+puts "== build: $nvpin ports made virtual (clk left as a real pin)"
 export_assignments
 
 # --- synthesis, then place and route ------------------------------------------

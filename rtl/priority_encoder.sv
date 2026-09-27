@@ -141,7 +141,9 @@ module priority_encoder #(
     end
   end
 
-  // The optional pipeline register between the two levels.
+  // The optional pipeline register between the two levels. Explicit
+  // generate because Quartus Standard/Lite rejects the bare form.
+  generate
   if (REGISTERED) begin : g_reg
     always_ff @(posedge clk) begin
       summary <= summary_c;
@@ -151,6 +153,7 @@ module priority_encoder #(
     assign summary = summary_c;
     assign offsets = offsets_c;
   end
+  endgenerate
 
   // -------------------------------------------------------------------------
   // Level 2: pick the group, then pick its precomputed offset. Selecting a

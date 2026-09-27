@@ -255,7 +255,11 @@ module order_table #(
   logic [ENTRY_W-1:0] rd_a [WAYS];   // op_ref's set, as read at ACCEPT
   logic [ENTRY_W-1:0] rd_b [WAYS];   // op_new_ref's set, likewise
 
-  for (genvar w = 0; w < int'(WAYS); w++) begin : g_way
+  // Explicit generate/genvar: Quartus Standard/Lite's parser rejects the
+  // bare form and an in-loop genvar, though both are legal SystemVerilog.
+  genvar w;
+  generate
+  for (w = 0; w < int'(WAYS); w++) begin : g_way
     // Port A: old/primary order's set. Port B: a Replace's new order's set.
     tdp_ram #(.DW(ENTRY_W), .DEPTH(SETS)) u_way (
         .clk   (clk),
@@ -265,6 +269,7 @@ module order_table #(
         .b_dout(rd_b[w])
     );
   end
+  endgenerate
 
   // -------------------------------------------------------------------------
   // The stash: STASH full entries in flip-flops, searched in parallel. Being

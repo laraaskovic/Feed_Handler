@@ -14,19 +14,22 @@
 # report_clock_fmax_summary, which re-derives the maximum frequency for the
 # clock including hold and duty-cycle restrictions. So this prints:
 #
-#   FMAX_REPORTED  - Quartus's own Fmax, the one to quote
-#   FMAX_FROM_SLACK- the Vivado-style extrapolation, for apples-to-apples
-#                    comparison with syn/out/vivado/results.txt
+#   FMAX_CORE      - register-to-register Fmax, the one to quote. See the
+#                    note at its computation for why ports are excluded.
+#   WNS_CORE       - the slack that FMAX_CORE is derived from
+#   WNS_ALL        - worst slack over every path, ports included
+#   FMAX_REPORTED  - Quartus's own Fmax summary
 #
-# They will differ. The gap between them is itself the thing worth
+# FMAX_REPORTED and a slack-derived Fmax can differ. The gap between them is itself the thing worth
 # understanding: it is how much headroom the tool left on the table because
 # the constraint was already met.
 #
 # OUTPUT
 #   fmax.rpt          Quartus's Fmax summary
-#   timing_paths.rpt  the ten worst setup paths, full detail - which logic
-#                     limits Fmax, and why. This is the file to read when
-#                     asked "what was your critical path?"
+#   timing_core.rpt   the ten worst register-to-register paths, full detail -
+#                     which logic limits Fmax, and why. This is the file to
+#                     read when asked "what was your critical path?"
+#   timing_paths.rpt  the ten worst paths of any kind, ports included
 #   results.txt       one appended line per module, in syn/out/quartus/
 # -----------------------------------------------------------------------------
 
@@ -76,6 +79,28 @@ if {$wns eq ""} {
 
 set fmax_slack [format "%.1f" [expr {1000.0 / ($period - $wns)}]]
 
+# --- core (register-to-register) Fmax ------------------------------------------
+# The overall worst path above is often a port path, and those are distorted
+# here: the virtual I/O budget in ooc.sdc is referenced to an ideal clock, but
+# the registers behind the ports see ~4 ns of real clock-tree insertion delay,
+# so a register driving an output with ZERO logic in between still "fails".
+# That measures the constraint, not the design. The logic's own speed limit
+# is the worst register-to-register path, so that is the headline number;
+# the all-paths WNS (ports included) is still printed, as WNS_ALL.
+set wns_core ""
+foreach_in_collection p [get_timing_paths -setup -npaths 1 -detail summary \
+                             -from [get_registers *] -to [get_registers *]] {
+    set wns_core [get_path_info $p -slack]
+}
+if {$wns_core eq ""} {
+    set wns_core "n/a"
+    set fmax_core "n/a"
+} else {
+    set fmax_core [format "%.1f" [expr {1000.0 / ($period - $wns_core)}]]
+}
+report_timing -setup -npaths 10 -detail full_path \
+    -from [get_registers *] -to [get_registers *] -file timing_core.rpt
+
 # --- Quartus's own Fmax -------------------------------------------------------
 # Parsed from the report file rather than the report-panel API, because panel
 # names moved between Quartus versions ("TimeQuest Timing Analyzer||..." vs
@@ -117,8 +142,8 @@ set dsps  [fit_field $fitsum "Total DSP Blocks"]
 set vpins [fit_field $fitsum "Total virtual pins"]
 
 set summary "top=$top device=[get_global_assignment -name DEVICE]\
-WNS=${wns}ns FMAX_REPORTED=${fmax_reported}MHz FMAX_FROM_SLACK=${fmax_slack}MHz\
-ALM=$alms REG=$regs MEMBITS=$mbits DSP=$dsps VPIN=$vpins"
+FMAX_CORE=${fmax_core}MHz WNS_CORE=${wns_core}ns WNS_ALL=${wns}ns\
+FMAX_REPORTED=${fmax_reported}MHz ALM=$alms REG=$regs MEMBITS=$mbits DSP=$dsps VPIN=$vpins"
 puts "== RESULT $summary"
 
 # Appended, so a run over every module builds one table of results.
