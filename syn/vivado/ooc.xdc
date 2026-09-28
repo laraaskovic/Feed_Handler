@@ -19,4 +19,6 @@ set_output_delay -clock clk 3.2 [get_ports -filter {DIRECTION == OUT}]
 # Reset is synchronous and held for many cycles, and the cfg_* inputs are
 # static for a whole trading session. Neither is a real single-cycle path.
 set_false_path -from [get_ports rst]
-set_false_path -from [get_ports -quiet cfg_*]
+# The cfg_* false path lives in ooc_synth.tcl, not here: only decode has
+# cfg_* ports, and XDC cannot hold the `if` that skips it for the rest -
+# unguarded, it raised a critical warning on every other module.

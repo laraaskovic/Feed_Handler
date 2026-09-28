@@ -64,6 +64,11 @@ synth_design -top $top -part $part -mode out_of_context \
 # The 156.25 MHz datapath clock of a 10GBASE-R MAC: 6.4 ns. Constraints go in
 # after synthesis because the clock port only exists once the design does.
 read_xdc [file join $here ooc.xdc]
+# cfg_* inputs are static for a trading session. Only decode has them, so
+# the false path is applied only where the ports exist.
+if {[llength [get_ports -quiet cfg_*]] > 0} {
+    set_false_path -from [get_ports cfg_*]
+}
 
 write_checkpoint -force [file join $out post_synth.dcp]
 report_utilization    -file [file join $out util_synth.rpt]

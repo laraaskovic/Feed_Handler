@@ -75,7 +75,9 @@ module order_table #(
 
     // ---- slave: a normalized book operation from decode -----------------
     input  wire                s_valid,
-    input  itch_pkg::op_e      s_op,
+    // "wire" is required, not style: under `default_nettype none an input
+    // with only a data type has no net kind, which Vivado rejects.
+    input  wire itch_pkg::op_e s_op,
     input  wire [63:0]         s_ref,
     input  wire [63:0]         s_new_ref,
     input  wire                s_side,
