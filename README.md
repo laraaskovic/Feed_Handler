@@ -1023,9 +1023,10 @@ The default part is a Kintex UltraScale+ KU5P: 10G-class transceivers, 480
 BRAM36 (the order table needs 352), and part of the free Vivado ML Standard
 edition.
 
-**This flow has not been run yet** — see [§12](#12-status-and-what-is-deliberately-not-done).
 It needs an x86-64 machine with Vivado installed, and produces the only numbers
-that count as a signed-off Fmax.
+that count as a signed-off Fmax. Results so far are in
+[§10](#10-results-latency-area-timing); `price_levels`, `order_table` and
+`feed_handler_top` have not been run yet.
 
 ### `quartus/build.tcl`, `sta.tcl`, `run.sh`, `ooc.sdc` — routed timing on Intel parts
 
@@ -1350,6 +1351,85 @@ Regenerate with:
 python syn/yosys_synth.py        # writes syn/reports/yosys_summary.md
 ```
 
+### Routed timing — Vivado and Quartus
+
+The Yosys table above counts logic only. These numbers are **after placement
+and routing on a real part**, so they include wire delay — the delay that
+decides whether the design actually runs at 156.25 MHz (a 6.4 ns clock).
+
+**How they are measured.** Each module is implemented *out of context*: on its
+own, with no board and no pins, constrained by one 6.4 ns clock. Every input
+is assumed to arrive 3.2 ns after the clock edge and every output to be needed
+3.2 ns before the next one — half the period is budgeted to the logic outside
+the module, so a port that feeds straight into slow logic cannot hide. Scripts:
+`syn/vivado/ooc_synth.tcl` + `ooc.xdc`, and `syn/quartus/run.sh` + `ooc.sdc`
+(see [§8](#8-file-by-file-synthesis-syn)).
+
+**How to read them.**
+
+- **Slack** is how much time is left over on the worst path at 6.4 ns.
+  Positive = timing met at 156.25 MHz; negative = the path is too slow.
+- **Fmax** is derived from slack as 1000 / (6.4 − slack). It is an estimate:
+  once a constraint is met the tools stop optimising, so the true maximum is
+  usually somewhat higher.
+- **All paths** includes the port paths with their 3.2 ns budget.
+  **Register-to-register** is the module's own logic between flip-flops. Both
+  must pass in a real system; the second says how much headroom the logic
+  itself has.
+
+**Vivado 2026.1, Kintex UltraScale+ KU5P (`xcku5p-ffvb676-2-e`)** — the part
+the design targets:
+
+| module | all paths: slack | all paths: Fmax | reg-to-reg: slack | reg-to-reg: Fmax | LUT | FF | DSP | result |
+|---|---|---|---|---|---|---|---|---|
+| `hdr_parse` | +1.84 ns | 219 MHz | +4.11 ns | ~436 MHz | 827 | 994 | 0 | **met** |
+| `msg_frame` | +0.47 ns | 169 MHz | +2.57 ns | ~261 MHz | 1,403 | 986 | 0 | **met** |
+| `decode` | +0.92 ns | 183 MHz | +4.36 ns | ~490 MHz | 201 | 979 | 9 | **met** |
+| `price_levels` | _not yet run_ | | | | | | | |
+| `order_table` | _not yet run_ | | | | | | | |
+| `feed_handler_top` | _not yet run_ | | | | | | | |
+
+In all three the worst path is an **input port** into a register
+(`s_tvalid` → `hb` in `hdr_parse`, `s_msg` → a status counter in `decode`,
+`s_tkeep` → the buffer reset in `msg_frame`): the 3.2 ns input budget, not the
+logic, sets the limit. The logic alone has 2.6–4.4 ns to spare. About 64–80 %
+of each worst path is routing, which is why the logic-only Yosys screen asks
+for ≤ ~3.2 ns.
+
+**Quartus Prime Lite 18.1, Cyclone V (`5CSEMA5F31C6`)** — a low-cost 28 nm
+part, far slower than the KU5P. It is used as a second, independent flow
+that runs on a laptop without Vivado, and as a harsh stress test: a path that
+is marginal here is a path worth looking at.
+
+| module | reg-to-reg: slack | reg-to-reg: Fmax | ALM | registers | result |
+|---|---|---|---|---|---|
+| `hdr_parse` (before fix) | −1.25 ns | ~131 MHz | 1,224 | 1,342 | failed |
+| `hdr_parse` (after fix) | +0.40 ns | ~167 MHz | 744 | 987 | **met** |
+| `price_levels` | −5.71 ns | ~83 MHz | 19,774 | 9,528 | **failed** |
+| `msg_frame`, `decode` | _run stopped (laptop out of memory)_ | | | | |
+
+The Quartus flow reports register-to-register as its headline because its port
+numbers are distorted: with no out-of-context mode, ports become *virtual
+pins* referenced to an ideal clock, while the registers behind them see ~4 ns
+of clock-tree delay, so even a register wired straight to an output "fails"
+by ~2.5 ns. That is a property of the setup, not the design.
+
+**The `hdr_parse` fix.** Its critical path read the MoldUDP64 sequence number
+through a chain of dependent header fields in one cycle: EtherType → VLAN →
+IPv4 header length → three adders → the MoldUDP64 offset → a 128-to-1 byte
+select. The offset depends on only five bits (VLAN flag + IHL), which are known
+several beats before the sequence number is read, so those bits are now
+registered early and each byte becomes a 32-to-1 select of fixed positions.
+Same outputs on every cycle — checked against the old RTL on 3,000 random
+frames including malformed ones — with 39 % fewer ALMs.
+
+**`price_levels` on Cyclone V** fails by 5.7 ns: the update path reads whether
+a tick is occupied, computes the new quantity, and then sets or clears one bit
+of the 4096-bit occupancy bitmap — 11.6 ns of logic and routing, with the
+write fanning out to all 4096 bitmap flip-flops. Whether it closes on the KU5P
+is the next Vivado run; if it does not, that update needs another pipeline
+stage.
+
 ### Throughput
 
 Structural, not measured: every stage accepts a beat every cycle, `decode`
@@ -1511,19 +1591,19 @@ from**.
 | 7 | Order table in BRAM (hashed, set-associative, stash) | done — 16 tests |
 | 8 | Price-level table, bitmap + priority encoder to BBO | done — 18 tests |
 | 9 | Integration, real-data replay, fixed-latency measurement | done — 7 tests |
-| 10 | Synthesis | **Yosys: done. Quartus (Cyclone V): runs, partial results. Vivado sign-off: not run** |
+| 10 | Synthesis | **Yosys: done. Vivado (KU5P): `hdr_parse`, `msg_frame`, `decode` met at 156.25 MHz; `price_levels`, `order_table`, top not yet run. Quartus (Cyclone V): partial** |
 
 **All eleven RTL files are complete and wired together.** There is no stub, no
 `TODO`, and no unimplemented path in `rtl/`.
 
 ### What is deliberately not done
 
-**The Vivado out-of-context run.** The scripts are written
-(`syn/vivado/ooc_synth.tcl`, `run_all.tcl`, `ooc.xdc`) but have never been
-executed, because Vivado is not installed on the development machine and only
-runs on x86-64. Until then there is **no signed-off Fmax** — only the Yosys
-logic-delay screen, which deliberately excludes routing. Everything in
-[§10](#10-results-latency-area-timing) should be read with that caveat.
+**The rest of the Vivado out-of-context run.** `hdr_parse`, `msg_frame` and
+`decode` are routed and meet 156.25 MHz on the KU5P. `price_levels`,
+`order_table` and `feed_handler_top` — the three modules with block RAM and
+the widest logic — have not been run yet, so there is **no signed-off Fmax for
+the whole design** until they are. `price_levels` is the one to watch: it
+fails badly on the slower Cyclone V (see [§10](#10-results-latency-area-timing)).
 
 **A single shared order table across all symbols.** Measured and rejected:
 1,742,866 simultaneously live orders across all 8,713 symbols means ~4 M entries
