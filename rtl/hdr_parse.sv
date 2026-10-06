@@ -130,13 +130,42 @@ module hdr_parse #(
     // rather than the frame length is what makes Ethernet padding harmless.
     payload_len = ip_total_len - {8'd0, ihl_bytes} - 16'd8 - 16'd20;
 
-    // MoldUDP64: 10-byte session, 8-byte sequence, 2-byte count, all
-    // big-endian (lowest address is most significant).
-    mold_seq = {hb[7'(mold_off + 8'd10)], hb[7'(mold_off + 8'd11)],
-                hb[7'(mold_off + 8'd12)], hb[7'(mold_off + 8'd13)],
-                hb[7'(mold_off + 8'd14)], hb[7'(mold_off + 8'd15)],
-                hb[7'(mold_off + 8'd16)], hb[7'(mold_off + 8'd17)]};
-    mold_cnt = {hb[7'(mold_off + 8'd18)], hb[7'(mold_off + 8'd19)]};
+  end
+
+  // -------------------------------------------------------------------------
+  // MoldUDP64 sequence and count: 10-byte session, 8-byte sequence, 2-byte
+  // count, all big-endian (lowest address is most significant).
+  //
+  // TIMING. Reading these straight from mold_off was this module's critical
+  // path: hb[13] -> vlan -> ip_off -> hb[ip_off] -> IHL -> three adders ->
+  // mold_off -> +10..+19 -> a 128:1 byte mux, all in one cycle (~131 MHz on
+  // Cyclone V, against 156.25 needed).
+  //
+  // But mold_off depends on only five bits - the VLAN flag and the IHL
+  // nibble - so it can take only 32 values, and both are settled by
+  // PARAM_BEAT, long before the sequence bytes are read at emit_start (beat
+  // 7 or later). So those five bits are registered at PARAM_BEAT, and each
+  // byte becomes a 32:1 mux of FIXED hb entries: the offsets are constants
+  // per select value, so the adders vanish into wiring. Identical results
+  // for every header, malformed IHL included.
+  // -------------------------------------------------------------------------
+  logic [4:0] mold_sel;          // {vlan_tagged, IHL}, latched at PARAM_BEAT
+  logic [7:0] mold_b [0:31][0:9];// every candidate field byte, per select
+  int         cand_off;
+
+  always_comb begin
+    for (int s = 0; s < 32; s++) begin
+      // Same arithmetic as mold_off above, with the inputs made constants.
+      cand_off = ((s >= 16) ? 18 : 14) + (s % 16) * 4 + 8 + 10;
+      for (int k = 0; k < 10; k++) begin
+        mold_b[s][k] = hb[(cand_off + k) % HDR_BYTES];
+      end
+    end
+    mold_seq = {mold_b[mold_sel][0], mold_b[mold_sel][1],
+                mold_b[mold_sel][2], mold_b[mold_sel][3],
+                mold_b[mold_sel][4], mold_b[mold_sel][5],
+                mold_b[mold_sel][6], mold_b[mold_sel][7]};
+    mold_cnt = {mold_b[mold_sel][8], mold_b[mold_sel][9]};
   end
 
   // -------------------------------------------------------------------------
@@ -223,6 +252,7 @@ module hdr_parse #(
       stat_packets <= 32'd0;
       stat_dropped <= 32'd0;
       r_off        <= 3'd0;
+      mold_sel     <= 5'd0;
       emit_start   <= 8'd0;
       pay_len_q    <= 16'd0;
       prev_data    <= '0;
@@ -255,6 +285,7 @@ module hdr_parse #(
         // --- decide, once, what this packet looks like ---------------------
         if (beat_idx == PARAM_BEAT) begin
           pkt_ok     <= is_ipv4 & is_udp;
+          mold_sel   <= {vlan_tagged, hb[7'(ip_off)][3:0]};
           r_off      <= payload_off[2:0];
           pay_len_q  <= payload_len;
           out_left   <= (payload_len + 16'd7) >> 3;   // ceil(len / 8)

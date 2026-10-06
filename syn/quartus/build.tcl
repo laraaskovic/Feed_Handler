@@ -88,15 +88,12 @@ foreach f $sources {
 }
 set_global_assignment -name SDC_FILE [file join $here ooc.sdc]
 
-# Nothing below changes what the design IS - only how hard Quartus works and
-# how many cores it uses. But the legal names and values for these have moved
-# between Quartus releases, and a rejected assignment aborts the whole run.
-# One bad tuning knob must not cost us the Fmax number, so each is attempted
-# separately and a rejection is reported and skipped.
-#
-# The dialect is deliberately NOT set here: files added as SYSTEMVERILOG_FILE
-# already parse as SystemVerilog, so naming a version only adds a way to fail.
+# The RTL uses packages, typed enums and `default_nettype`. Files added as
+# SYSTEMVERILOG_FILE already parse as SV; try the explicit dialect and the
+# performance knobs, but skip any name that this Quartus release rejects so a
+# single bad tuning knob does not abort the whole build.
 foreach {name value} {
+    VERILOG_INPUT_VERSION      SYSTEMVERILOG_2005
     OPTIMIZATION_MODE          "HIGH PERFORMANCE EFFORT"
     NUM_PARALLEL_PROCESSORS    ALL
 } {
@@ -106,10 +103,23 @@ foreach {name value} {
 }
 
 # --- out-of-context ports -----------------------------------------------------
-# See the header: every port virtual, except the clock.
-set_instance_assignment -name VIRTUAL_PIN ON  -to *
-set_instance_assignment -name VIRTUAL_PIN OFF -to clk
-
+# See the header: every port virtual, except the clock. A wildcard ON plus a
+# specific OFF for clk does NOT work - Quartus 18.1 still virtualises clk and
+# warns "clock port is fed by virtual pin", which makes every timing number
+# meaningless. So elaborate first to learn the port names, then assign each
+# non-clock port explicitly.
+export_assignments
+puts "== build: elaborating to enumerate ports"
+execute_module -tool map -args "--analysis_and_elaboration"
+set nvpin 0
+foreach_in_collection p [get_names -filter * -node_type pin] {
+    set name [get_name_info -info full_path $p]
+    if {$name ne "clk"} {
+        set_instance_assignment -name VIRTUAL_PIN ON -to $name
+        incr nvpin
+    }
+}
+puts "== build: $nvpin ports made virtual (clk left as a real pin)"
 export_assignments
 
 # --- synthesis, then place and route ------------------------------------------
