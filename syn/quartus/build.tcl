@@ -88,14 +88,22 @@ foreach f $sources {
 }
 set_global_assignment -name SDC_FILE [file join $here ooc.sdc]
 
-# The RTL uses packages, typed enums and `default_nettype. Files added as
-# SYSTEMVERILOG_FILE already parse as SV; this pins the dialect explicitly so
-# the result does not depend on the install's default.
-set_global_assignment -name SYSTEMVERILOG_INPUT_VERSION SYSTEMVERILOG_2005
-# Chase frequency rather than area - the comparable setting to Vivado's
-# default synthesis strategy plus phys_opt_design.
-set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
-set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
+# Nothing below changes what the design IS - only how hard Quartus works and
+# how many cores it uses. But the legal names and values for these have moved
+# between Quartus releases, and a rejected assignment aborts the whole run.
+# One bad tuning knob must not cost us the Fmax number, so each is attempted
+# separately and a rejection is reported and skipped.
+#
+# The dialect is deliberately NOT set here: files added as SYSTEMVERILOG_FILE
+# already parse as SystemVerilog, so naming a version only adds a way to fail.
+foreach {name value} {
+    OPTIMIZATION_MODE          "HIGH PERFORMANCE EFFORT"
+    NUM_PARALLEL_PROCESSORS    ALL
+} {
+    if {[catch {set_global_assignment -name $name $value} err]} {
+        puts "== build: skipping $name - this Quartus rejects it ($err)"
+    }
+}
 
 # --- out-of-context ports -----------------------------------------------------
 # See the header: every port virtual, except the clock.

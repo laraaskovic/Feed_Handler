@@ -1,4 +1,7 @@
 // ---------------------------------------------------------------------------
+// COMPLETE
+
+
 // hdr_parse.sv - step 4: strip Ethernet / IPv4 / UDP / MoldUDP64 headers.
 //
 // Input :  a raw Ethernet frame as 64-bit AXI-Stream beats.
