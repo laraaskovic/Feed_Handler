@@ -221,6 +221,11 @@ if {$mode eq "synth"} {
     return
 }
 
+# The order table's EXEC path (BRAM read -> tag compare -> another way's
+# write enable) is ~75% routing, because its BRAMs span most of the die.
+# Explore placement and run physical optimisation after routing as well.
+set_property strategy Performance_ExplorePostRoutePhysOpt [get_runs impl_1]
+
 launch_runs impl_1 -jobs 4
 wait_on_run impl_1
 if {[get_property PROGRESS [get_runs impl_1]] ne "100%"} {

@@ -78,6 +78,7 @@ the data, so every message takes exactly this path:
 |---|---|---|
 | **Latency** | 13–14 cycles wire→BBO (83–90 ns at 156.25 MHz); a Replace one more | Measured by `tb/test_feed_handler_top.py::test_fixed_latency`, per message type, and asserted to be a **constant** |
 | **Throughput** | one message per 2 cycles sustained — the tightest spacing the wire can produce; no stalls, no backpressure, no data-dependent timing | Structural: see [§5.7](#57-order_tablesv--the-lookup-every-message-needs) |
+| **Timing** | the whole design, placed and routed on a Kintex UltraScale+ KU5P, **meets 156.25 MHz**: +0.073 ns worst setup slack (~158 MHz), +0.033 ns hold, 0 failing endpoints | `syn/vivado/bd/build_bd.tcl -tclargs impl`, see [§10](#10-results-latency-area-timing) |
 | **Correctness** | the published BBO equals the Python model's BBO after **every single message**, keyed by MoldUDP64 sequence number | `tb/test_feed_handler_top.py` |
 
 **The design in one sentence:** every data structure that makes the Python easy
@@ -1081,6 +1082,20 @@ symbol filter and the output registers. They are re-expressed as
 and the diagram shows that: every other field of the op goes straight from
 decode to the order table.
 
+**Watching the data flow.** After **Run Simulation** in the GUI, type
+`source syn/vivado/bd/waves.tcl` (with the full path) in the Tcl Console.
+It adds one waveform group per block, in flow order, built from the nets
+between the blocks: the same wires as in the diagram. It then re-runs to just
+past the start of traffic. From about 105.3 µs (before that the order table
+is clearing its RAM) you can follow one packet through the stages:
+- its beats arrive on `s`
+- `hdr_parse` emits it with the headers stripped and the sequence number in `TUSER`
+- `msg_frame` pulses once per message
+- `decode` shows each op, its reference, side, size and tick
+- `order_table` emits ladder updates
+- `price_levels` and the outputs show the new best bid/ask, tagged with
+  the message's sequence number
+
 **How we know it is the same design.** The generated `feed_handler_wrapper`
 has exactly `feed_handler_top`'s ports. `tb/bd_equiv_tb.sv` drives both from
 one stream (20,000 messages, random packet boundaries, random idle gaps) and
@@ -1522,6 +1537,41 @@ logic, sets the limit. The logic alone has 2.6–4.4 ns to spare. About 64–80 
 of each worst path is routing, which is why the logic-only Yosys screen asks
 for ≤ ~3.2 ns.
 
+**The whole design, routed (KU5P).** The block design in `syn/vivado/bd/`
+places and routes every stage together, out of context, with the same
+`ooc.xdc` constraints (`build_bd.tcl -tclargs impl`). The table gives the worst
+path *ending* in each block; the top row is the design as a whole.
+
+| block | slack | Fmax | worst path starts at |
+|---|---|---|---|
+| **whole design** | **+0.073 ns** | **~158 MHz** | `order_table` way 5 BRAM |
+| `hdr_parse` | +0.879 ns | 181 MHz | input port `s_tvalid` (3.2 ns budget) |
+| `msg_frame` | +2.311 ns | 245 MHz | `hdr_parse` output register |
+| `decode` | +2.393 ns | 250 MHz | reset synchronizer |
+| `locate_filter` | +3.257 ns | 318 MHz | reset synchronizer |
+| `order_table` | **+0.073 ns** | **158 MHz** | its own BRAM |
+| `price_levels` | +0.690 ns | 175 MHz | its own BRAM |
+| `bbo_out` | +3.096 ns | 303 MHz | reset synchronizer |
+
+Setup, hold (+0.033 ns worst) and pulse width are all met: *"All user
+specified timing constraints are met."* Resources: 27,146 LUT (13 % of the
+part), 15,201 FF (4 %), 400 RAMB36 + 8 RAMB18 (84 % of block RAM), 27 DSP (1 %).
+
+**How `order_table` closed.** The first routed run failed by 0.201 ns
+(151.5 MHz). The worst path was the one-cycle EXEC path from §5.7: a block RAM
+read in one way → tag compare (three `CARRY8` levels) → a *different* way's
+write enable, ten logic levels in all. Only 27 % of its 6.1 ns was logic; 73 %
+was routing, because the 8 ways × 16,384 sets take 400 of the KU5P's 480
+RAMB36 and so spread across most of the die. Nothing in the RTL changed:
+`impl_1` now runs Vivado's `Performance_ExplorePostRoutePhysOpt` strategy
+(wider placement exploration, physical optimisation after routing), which
+recovered 0.27 ns. **The margin is thin.** If a later change re-opens it, the
+levers are, in order: a pblock keeping the ways together; fewer sets (less
+BRAM, shorter wires); a shallower write-enable decision per way.
+
+`price_levels`, which fails by 5.7 ns on the Cyclone V below, meets timing on
+the KU5P with 0.69 ns to spare, with no extra pipeline stage.
+
 **Quartus Prime Lite 18.1, Cyclone V (`5CSEMA5F31C6`)** — a low-cost 28 nm
 part, far slower than the KU5P. It is used as a second, independent flow
 that runs on a laptop without Vivado, and as a harsh stress test: a path that
@@ -1552,9 +1602,8 @@ frames including malformed ones — with 39 % fewer ALMs.
 **`price_levels` on Cyclone V** fails by 5.7 ns: the update path reads whether
 a tick is occupied, computes the new quantity, and then sets or clears one bit
 of the 4096-bit occupancy bitmap — 11.6 ns of logic and routing, with the
-write fanning out to all 4096 bitmap flip-flops. Whether it closes on the KU5P
-is the next Vivado run; if it does not, that update needs another pipeline
-stage.
+write fanning out to all 4096 bitmap flip-flops. On the KU5P, the target part,
+it closes (+0.690 ns, above).
 
 ### Throughput
 
@@ -1741,8 +1790,7 @@ from**.
 | 7 | Order table in BRAM (hashed, set-associative, stash) | done — 16 tests |
 | 8 | Price-level table, bitmap + priority encoder to BBO | done — 18 tests |
 | 9 | Integration, real-data replay, fixed-latency measurement | done — 7 tests |
-| 10 | Synthesis | **Yosys: done. Vivado (KU5P): `hdr_parse`, `msg_frame`, `decode` met at 156.25 MHz; `price_levels`, `order_table`, top not yet run. Quartus (Cyclone V): partial** |
-
+| 10 | Synthesis | **Yosys: done. Vivado (KU5P): whole design placed and routed, meets 156.25 MHz (+0.073 ns). Quartus (Cyclone V): partial** |
 | 11 | Vivado block design (IP Integrator), xsim equivalence vs. `feed_handler_top` | done — 0 mismatches over 96,552 cycles; found and fixed a decode bug Verilator hid |
 
 **All eleven RTL files are complete and wired together.** There is no stub, no
@@ -1750,12 +1798,11 @@ from**.
 
 ### What is deliberately not done
 
-**The rest of the Vivado out-of-context run.** `hdr_parse`, `msg_frame` and
-`decode` are routed and meet 156.25 MHz on the KU5P. `price_levels`,
-`order_table` and `feed_handler_top` — the three modules with block RAM and
-the widest logic — have not been run yet, so there is **no signed-off Fmax for
-the whole design** until they are. `price_levels` is the one to watch: it
-fails badly on the slower Cyclone V (see [§10](#10-results-latency-area-timing)).
+**Timing headroom.** The whole design is routed and meets 156.25 MHz on the
+KU5P, but by only 0.073 ns, in `order_table`, and only with a non-default
+implementation strategy (see [§10](#10-results-latency-area-timing)). It is not
+yet robust to RTL changes, tool versions or placement seeds. There is also no
+board: the run is out of context, with no MAC, pins or clocking.
 
 **A single shared order table across all symbols.** Measured and rejected:
 1,742,866 simultaneously live orders across all 8,713 symbols means ~4 M entries
