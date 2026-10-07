@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg viewBox="0 0 3018 854"
+     preserveAspectRatio="xMidYMid meet"
+     version="1.1"
+     baseProfile="full"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:ev="http://www.w3.org/2001/xml-events"
+     xml:space="preserve">
+<title>feed_handler_imp</title>
+<desc>Nlview schematic (SVG)</desc>
+<clipPath id="clippingbbox">
+<rect x="0" y="0" width="3018" height="854" />
+</clipPath>
+<g stroke="#8bc34a"
+   stroke-width="1"
+   stroke-linecap="butt"
+   stroke-linejoin="miter"
+   stroke-miterlimit="4"
+   stroke-dasharray="none"
+   stroke-dashoffset="0"
+   fill="none"
+   font-family="Helvetica"
+   font-style="normal"
+   font-size="12"
+   writing-mode="lr-tb"
+   cursor="crosshair"
+   clip-path="url(#clippingbbox)">
+<path d="M0 0h3018v855h-3018z" stroke="none" fill="white" />
+<path d="M178 467l-7 7h-14v-14h14z" stroke="none" fill="#ddd4d0" />
+<g stroke="black" stroke-width="3">
+<path d="M178 467l-7 7h-14v-14h14z" />
+<text x="153" y="467" fill="#1c1f28" stroke-width="0" text-anchor="end" dy="4.4">cfg_band_base[31:0]</text>
+<path d="M178 547l-7 7h-14v-14h14z" stroke="none" fill="#ddd4d0" />
+<path d="M178 547l-7 7h-14v-14h14z" />
+<text x="153" y="547" fill="#1c1f28" stroke-width="0" text-anchor="end" dy="4.4">cfg_locate[15:0]</text>
+<path d="M178 577l-7 7h-14v-14h14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black">
+<path d="M178 577l-7 7h-14v-14h14z" />
+<text x="153" y="577" fill="#1c1f28" stroke-width="0" text-anchor="end" dy="4.4">clk</text>
+<path d="M178 637l-7 7h-14v-14h14z" stroke="none" fill="#ddd4d0" />
+<path d="M178 637l-7 7h-14v-14h14z" />
+<text x="153" y="637" fill="#1c1f28" stroke-width="0" text-anchor="end" dy="4.4">rst</text>
+<path d="M178 757l-7 7h-14v-14h14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="#2a5e6f" stroke-width="3">
+<path d="M178 757l-7 7h-14v-14h14z" />
+<text x="153" y="757" fill="#1c1f28" stroke-width="0" text-anchor="end" dy="4.4">s</text>
+<path d="M235 589h266l3 1l2 1l1 2l1 3v122l-1 3l-1 2l-2 1l-3 1h-266l-3 -1l-2 -1l-1 -2l-1 -3v-122l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="368" y="587" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">rst_sync</text>
+<text x="368" y="727" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">Processor System Reset</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M218 617h10" />
+<text x="230" y="617" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">slowest_sync_clk</text>
+<path d="M218 637h10" />
+<text x="230" y="637" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">ext_reset_in</text>
+<circle cx="225" cy="657" r="3" />
+<path d="M218 657h4" />
+<text x="230" y="657" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">aux_reset_in</text>
+<path d="M218 677h10" />
+<text x="230" y="677" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">mb_debug_sys_rst</text>
+<path d="M218 697h10" />
+<text x="230" y="697" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">dcm_locked</text>
+<path d="M518 617h-10" />
+<text x="506" y="617" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">mb_reset</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M518 637h-10" />
+<text x="506" y="637" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">bus_struct_reset[0:0]</text>
+<path d="M518 657h-10" />
+<text x="506" y="657" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">peripheral_reset[0:0]</text>
+<circle cx="511" cy="677" r="3" />
+<path d="M518 677h-4" />
+<text x="506" y="677" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">interconnect_aresetn[0:0]</text>
+<circle cx="511" cy="697" r="3" />
+<path d="M518 697h-4" />
+<text x="506" y="697" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">peripheral_aresetn[0:0]</text>
+</g>
+<g stroke="#575d6c">
+<path d="M235 589h266" />
+<path d="M501,589 A6.83537,6.83537 1.61957 0,1 508,596" />
+<path d="M508 596v122" />
+<path d="M508,718 A6.83537,6.83537 1.61957 0,1 501,725" />
+<path d="M501 725h-266" />
+<path d="M235,725 A6.83537,6.83537 1.61957 0,1 228,718" />
+<path d="M228 718v-122" />
+<path d="M228,596 A6.83537,6.83537 1.61957 0,1 235,589" />
+<path d="M585 729h206l3 1l2 1l1 2l1 3v82l-1 3l-1 2l-2 1l-3 1h-206l-3 -1l-2 -1l-1 -2l-1 -3v-82l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="688" y="727" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">hdr_parse</text>
+<text x="688" y="827" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">bd_hdr_parse_v1_0</text>
+<path d="M568 748h10v18h-10z" stroke="none" fill="#e5c7ff" />
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M587 752v10" />
+<path d="M582 757h10" />
+</g>
+<g stroke="#1c1f28">
+<path d="M580 750h14v14h-14z" />
+<text x="595" y="757" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_axis</text>
+<path d="M798 748h10v18h-10z" stroke="none" fill="#e5c7ff" />
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M788 752v10" />
+<path d="M783 757h10" />
+</g>
+<g stroke="#1c1f28">
+<path d="M781 750h14v14h-14z" />
+<text x="781" y="757" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_axis</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M568 777h10" />
+<text x="580" y="777" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">clk</text>
+<path d="M568 797h10" />
+<text x="580" y="797" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">rst</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M808 777h-10" />
+<text x="796" y="777" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_packets[31:0]</text>
+<path d="M808 797h-10" />
+<text x="796" y="797" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_dropped[31:0]</text>
+</g>
+<g stroke="#575d6c">
+<path d="M585 729h206" />
+<path d="M791,729 A6.83537,6.83537 1.61957 0,1 798,736" />
+<path d="M798 736v82" />
+<path d="M798,818 A6.83537,6.83537 1.61957 0,1 791,825" />
+<path d="M791 825h-206" />
+<path d="M585,825 A6.83537,6.83537 1.61957 0,1 578,818" />
+<path d="M578 818v-82" />
+<path d="M578,736 A6.83537,6.83537 1.61957 0,1 585,729" />
+<path d="M885 589h206l3 1l2 1l1 2l1 3v142l-1 3l-1 2l-2 1l-3 1h-206l-3 -1l-2 -1l-1 -2l-1 -3v-142l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="988" y="587" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">msg_frame</text>
+<text x="988" y="747" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">bd_msg_frame_v1_0</text>
+<path d="M868 638h10v18h-10z" stroke="none" fill="#e5c7ff" />
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M887 642v10" />
+<path d="M882 647h10" />
+</g>
+<g stroke="#1c1f28">
+<path d="M880 640h14v14h-14z" />
+<text x="895" y="647" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_axis</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M868 667h10" />
+<text x="880" y="667" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">clk</text>
+<path d="M868 687h10" />
+<text x="880" y="687" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">rst</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1108 617h-10" />
+<text x="1096" y="617" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_msg[399:0]</text>
+<path d="M1108 637h-10" />
+<text x="1096" y="637" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_len[7:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1108 657h-10" />
+<text x="1096" y="657" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1108 677h-10" />
+<text x="1096" y="677" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_seq[63:0]</text>
+<path d="M1108 697h-10" />
+<text x="1096" y="697" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_messages[31:0]</text>
+<path d="M1108 717h-10" />
+<text x="1096" y="717" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_frame_err[31:0]</text>
+</g>
+<g stroke="#575d6c">
+<path d="M885 589h206" />
+<path d="M1091,589 A6.83537,6.83537 1.61957 0,1 1098,596" />
+<path d="M1098 596v142" />
+<path d="M1098,738 A6.83537,6.83537 1.61957 0,1 1091,745" />
+<path d="M1091 745h-206" />
+<path d="M885,745 A6.83537,6.83537 1.61957 0,1 878,738" />
+<path d="M878 738v-142" />
+<path d="M878,596 A6.83537,6.83537 1.61957 0,1 885,589" />
+<path d="M1215 249h286l3 1l2 1l1 2l1 3v302l-1 3l-1 2l-2 1l-3 1h-286l-3 -1l-2 -1l-1 -2l-1 -3v-302l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="1358" y="247" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">decode</text>
+<text x="1358" y="567" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">bd_decode_v1_0</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1198 347h10" />
+<text x="1210" y="347" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">clk</text>
+<path d="M1198 367h10" />
+<text x="1210" y="367" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">rst</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1198 387h10" />
+<text x="1210" y="387" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_msg[399:0]</text>
+<path d="M1198 407h10" />
+<text x="1210" y="407" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_len[7:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1198 427h10" />
+<text x="1210" y="427" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1198 447h10" />
+<text x="1210" y="447" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_seq[63:0]</text>
+<path d="M1198 467h10" />
+<text x="1210" y="467" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">cfg_band_base[31:0]</text>
+<path d="M1518 277h-10" />
+<text x="1506" y="277" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_op[2:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1518 297h-10" />
+<text x="1506" y="297" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1518 317h-10" />
+<text x="1506" y="317" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_locate[15:0]</text>
+<path d="M1518 337h-10" />
+<text x="1506" y="337" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_ref[63:0]</text>
+<path d="M1518 357h-10" />
+<text x="1506" y="357" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_new_ref[63:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1518 377h-10" />
+<text x="1506" y="377" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_side</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1518 397h-10" />
+<text x="1506" y="397" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_qty[31:0]</text>
+<path d="M1518 417h-10" />
+<text x="1506" y="417" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_price[31:0]</text>
+<path d="M1518 437h-10" />
+<text x="1506" y="437" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_tick[15:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1518 457h-10" />
+<text x="1506" y="457" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_tick_ok</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1518 477h-10" />
+<text x="1506" y="477" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_seq[63:0]</text>
+<path d="M1518 497h-10" />
+<text x="1506" y="497" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_ops[31:0]</text>
+<path d="M1518 517h-10" />
+<text x="1506" y="517" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_out_of_band[31:0]</text>
+<path d="M1518 537h-10" />
+<text x="1506" y="537" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_subpenny[31:0]</text>
+</g>
+<g stroke="#575d6c">
+<path d="M1215 249h286" />
+<path d="M1501,249 A6.83537,6.83537 1.61957 0,1 1508,256" />
+<path d="M1508 256v302" />
+<path d="M1508,558 A6.83537,6.83537 1.61957 0,1 1501,565" />
+<path d="M1501 565h-286" />
+<path d="M1215,565 A6.83537,6.83537 1.61957 0,1 1208,558" />
+<path d="M1208 558v-302" />
+<path d="M1208,256 A6.83537,6.83537 1.61957 0,1 1215,249" />
+<path d="M1665 169h246l3 1l2 1l1 2l1 3v262l-1 3l-1 2l-2 1l-3 1h-246l-3 -1l-2 -1l-1 -2l-1 -3v-262l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="1788" y="167" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">order_table</text>
+<text x="1788" y="447" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">bd_order_table_v1_0</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1648 207h10" />
+<text x="1660" y="207" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">clk</text>
+<path d="M1648 227h10" />
+<text x="1660" y="227" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">rst</text>
+<path d="M1648 247h10" />
+<text x="1660" y="247" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1648 267h10" />
+<text x="1660" y="267" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_op[2:0]</text>
+<path d="M1648 287h10" />
+<text x="1660" y="287" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_ref[63:0]</text>
+<path d="M1648 307h10" />
+<text x="1660" y="307" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_new_ref[63:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1648 327h10" />
+<text x="1660" y="327" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_side</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1648 347h10" />
+<text x="1660" y="347" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_qty[31:0]</text>
+<path d="M1648 367h10" />
+<text x="1660" y="367" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_tick[15:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1648 387h10" />
+<text x="1660" y="387" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_tick_ok</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1648 407h10" />
+<text x="1660" y="407" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_seq[63:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1928 197h-10" />
+<text x="1916" y="197" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_valid</text>
+<path d="M1928 217h-10" />
+<text x="1916" y="217" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_side</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1928 237h-10" />
+<text x="1916" y="237" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_tick[11:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1928 257h-10" />
+<text x="1916" y="257" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_add</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1928 277h-10" />
+<text x="1916" y="277" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_qty[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1928 297h-10" />
+<text x="1916" y="297" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_done</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M1928 317h-10" />
+<text x="1916" y="317" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_seq[63:0]</text>
+<path d="M1928 337h-10" />
+<text x="1916" y="337" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_collisions[31:0]</text>
+<path d="M1928 357h-10" />
+<text x="1916" y="357" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_missing[31:0]</text>
+<path d="M1928 377h-10" />
+<text x="1916" y="377" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_overrun[31:0]</text>
+<path d="M1928 397h-10" />
+<text x="1916" y="397" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_stash_peak[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M1928 417h-10" />
+<text x="1916" y="417" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">ready</text>
+</g>
+<g stroke="#575d6c">
+<path d="M1665 169h246" />
+<path d="M1911,169 A6.83537,6.83537 1.61957 0,1 1918,176" />
+<path d="M1918 176v262" />
+<path d="M1918,438 A6.83537,6.83537 1.61957 0,1 1911,445" />
+<path d="M1911 445h-246" />
+<path d="M1665,445 A6.83537,6.83537 1.61957 0,1 1658,438" />
+<path d="M1658 438v-262" />
+<path d="M1658,176 A6.83537,6.83537 1.61957 0,1 1665,169" />
+<path d="M2075 119h226l3 1l2 1l1 2l1 3v222l-1 3l-1 2l-2 1l-3 1h-226l-3 -1l-2 -1l-1 -2l-1 -3v-222l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="2188" y="117" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">price_levels</text>
+<text x="2188" y="357" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">bd_price_levels_v1_0</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2058 157h10" />
+<text x="2070" y="157" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">clk</text>
+<path d="M2058 177h10" />
+<text x="2070" y="177" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">rst</text>
+<path d="M2058 197h10" />
+<text x="2070" y="197" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_valid</text>
+<path d="M2058 217h10" />
+<text x="2070" y="217" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_side</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2058 237h10" />
+<text x="2070" y="237" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_tick[11:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2058 257h10" />
+<text x="2070" y="257" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_add</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2058 277h10" />
+<text x="2070" y="277" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_qty[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2058 297h10" />
+<text x="2070" y="297" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_done</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2058 317h10" />
+<text x="2070" y="317" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_seq[63:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2318 147h-10" />
+<text x="2306" y="147" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bbo_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2318 167h-10" />
+<text x="2306" y="167" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bbo_seq[63:0]</text>
+<path d="M2318 187h-10" />
+<text x="2306" y="187" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bid_tick[11:0]</text>
+<path d="M2318 207h-10" />
+<text x="2306" y="207" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bid_qty[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2318 227h-10" />
+<text x="2306" y="227" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bid_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2318 247h-10" />
+<text x="2306" y="247" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_ask_tick[11:0]</text>
+<path d="M2318 267h-10" />
+<text x="2306" y="267" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_ask_qty[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2318 287h-10" />
+<text x="2306" y="287" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_ask_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2318 307h-10" />
+<text x="2306" y="307" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_updates[31:0]</text>
+<path d="M2318 327h-10" />
+<text x="2306" y="327" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_underflow[31:0]</text>
+</g>
+<g stroke="#575d6c">
+<path d="M2075 119h226" />
+<path d="M2301,119 A6.83537,6.83537 1.61957 0,1 2308,126" />
+<path d="M2308 126v222" />
+<path d="M2308,348 A6.83537,6.83537 1.61957 0,1 2301,355" />
+<path d="M2301 355h-226" />
+<path d="M2075,355 A6.83537,6.83537 1.61957 0,1 2068,348" />
+<path d="M2068 348v-222" />
+<path d="M2068,126 A6.83537,6.83537 1.61957 0,1 2075,119" />
+<path d="M2455 29h266l3 1l2 1l1 2l1 3v242l-1 3l-1 2l-2 1l-3 1h-266l-3 -1l-2 -1l-1 -2l-1 -3v-242l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="2588" y="27" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">bbo_out</text>
+<text x="2588" y="287" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">bd_bbo_out_v1_0</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2438 57h10" />
+<text x="2450" y="57" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">clk</text>
+<path d="M2438 77h10" />
+<text x="2450" y="77" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">rst</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2438 97h10" />
+<text x="2450" y="97" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">cfg_band_base[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2438 117h10" />
+<text x="2450" y="117" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_bbo_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2438 137h10" />
+<text x="2450" y="137" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_bbo_seq[63:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2438 157h10" />
+<text x="2450" y="157" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_bid_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2438 177h10" />
+<text x="2450" y="177" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_bid_tick[11:0]</text>
+<path d="M2438 197h10" />
+<text x="2450" y="197" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_bid_qty[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2438 217h10" />
+<text x="2450" y="217" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_ask_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2438 237h10" />
+<text x="2450" y="237" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_ask_tick[11:0]</text>
+<path d="M2438 257h10" />
+<text x="2450" y="257" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_ask_qty[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2738 87h-10" />
+<text x="2726" y="87" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bbo_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2738 107h-10" />
+<text x="2726" y="107" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bbo_seq[63:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2738 127h-10" />
+<text x="2726" y="127" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bid_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2738 147h-10" />
+<text x="2726" y="147" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bid_price[31:0]</text>
+<path d="M2738 167h-10" />
+<text x="2726" y="167" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_bid_qty[31:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2738 187h-10" />
+<text x="2726" y="187" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_ask_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2738 207h-10" />
+<text x="2726" y="207" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_ask_price[31:0]</text>
+<path d="M2738 227h-10" />
+<text x="2726" y="227" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_ask_qty[31:0]</text>
+</g>
+<g stroke="#575d6c">
+<path d="M2455 29h266" />
+<path d="M2721,29 A6.83537,6.83537 1.61957 0,1 2728,36" />
+<path d="M2728 36v242" />
+<path d="M2728,278 A6.83537,6.83537 1.61957 0,1 2721,285" />
+<path d="M2721 285h-266" />
+<path d="M2455,285 A6.83537,6.83537 1.61957 0,1 2448,278" />
+<path d="M2448 278v-242" />
+<path d="M2448,36 A6.83537,6.83537 1.61957 0,1 2455,29" />
+<path d="M2455 329h266l3 1l2 1l1 2l1 3v122l-1 3l-1 2l-2 1l-3 1h-266l-3 -1l-2 -1l-1 -2l-1 -3v-122l1 -3l1 -2l2 -1z" stroke="none" fill="#e5c7ff" />
+<text x="2588" y="327" fill="#1c1f28" stroke-width="0" text-anchor="middle" dy="-1.6">locate_filter</text>
+<text x="2588" y="467" fill="#575d6c" stroke-width="0" text-anchor="middle" dy="9.6">bd_locate_filter_v1_0</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2438 357h10" />
+<text x="2450" y="357" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">clk</text>
+<path d="M2438 377h10" />
+<text x="2450" y="377" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">rst</text>
+<path d="M2438 397h10" />
+<text x="2450" y="397" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2438 417h10" />
+<text x="2450" y="417" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">s_locate[15:0]</text>
+<path d="M2438 437h10" />
+<text x="2450" y="437" fill="#1c1f28" stroke-width="0" font-size="10" dy="3.66667">cfg_locate[15:0]</text>
+</g>
+<g stroke="#1c1f28" stroke-width="3">
+<path d="M2738 387h-10" />
+<text x="2726" y="387" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">m_valid</text>
+</g>
+<g stroke="#1c1f28" stroke-width="5">
+<path d="M2738 407h-10" />
+<text x="2726" y="407" fill="#1c1f28" stroke-width="0" font-size="10" text-anchor="end" dy="3.66667">stat_other_symbol[31:0]</text>
+</g>
+<g stroke="#575d6c">
+<path d="M2455 329h266" />
+<path d="M2721,329 A6.83537,6.83537 1.61957 0,1 2728,336" />
+<path d="M2728 336v122" />
+<path d="M2728,458 A6.83537,6.83537 1.61957 0,1 2721,465" />
+<path d="M2721 465h-266" />
+<path d="M2455,465 A6.83537,6.83537 1.61957 0,1 2448,458" />
+<path d="M2448 458v-122" />
+<path d="M2448,336 A6.83537,6.83537 1.61957 0,1 2455,329" />
+<path d="M2818 57v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black">
+<path d="M2818 57v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="57" fill="#1c1f28" stroke-width="0" dy="4.4">m_bbo_valid</text>
+<path d="M2818 87v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black" stroke-width="3">
+<path d="M2818 87v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="87" fill="#1c1f28" stroke-width="0" dy="4.4">m_bbo_seq[63:0]</text>
+<path d="M2818 117v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black">
+<path d="M2818 117v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="117" fill="#1c1f28" stroke-width="0" dy="4.4">m_bid_valid</text>
+<path d="M2818 147v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black" stroke-width="3">
+<path d="M2818 147v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="147" fill="#1c1f28" stroke-width="0" dy="4.4">m_bid_price[31:0]</text>
+<path d="M2818 177v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 177v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="177" fill="#1c1f28" stroke-width="0" dy="4.4">m_bid_qty[31:0]</text>
+<path d="M2818 207v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black">
+<path d="M2818 207v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="207" fill="#1c1f28" stroke-width="0" dy="4.4">m_ask_valid</text>
+<path d="M2818 237v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black" stroke-width="3">
+<path d="M2818 237v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="237" fill="#1c1f28" stroke-width="0" dy="4.4">m_ask_price[31:0]</text>
+<path d="M2818 267v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 267v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="267" fill="#1c1f28" stroke-width="0" dy="4.4">m_ask_qty[31:0]</text>
+<path d="M2818 397v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 397v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="397" fill="#1c1f28" stroke-width="0" dy="4.4">stat_other_symbol[31:0]</text>
+<path d="M2818 427v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 427v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="427" fill="#1c1f28" stroke-width="0" dy="4.4">stat_collisions[31:0]</text>
+<path d="M2818 457v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 457v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="457" fill="#1c1f28" stroke-width="0" dy="4.4">stat_missing[31:0]</text>
+<path d="M2818 487v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black">
+<path d="M2818 487v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="487" fill="#1c1f28" stroke-width="0" dy="4.4">ready</text>
+<path d="M2818 517v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+</g>
+<g stroke="black" stroke-width="3">
+<path d="M2818 517v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="517" fill="#1c1f28" stroke-width="0" dy="4.4">stat_ops[31:0]</text>
+<path d="M2818 547v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 547v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="547" fill="#1c1f28" stroke-width="0" dy="4.4">stat_out_of_band[31:0]</text>
+<path d="M2818 577v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 577v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="577" fill="#1c1f28" stroke-width="0" dy="4.4">stat_overrun[31:0]</text>
+<path d="M2818 607v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 607v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="607" fill="#1c1f28" stroke-width="0" dy="4.4">stat_stash_peak[31:0]</text>
+<path d="M2818 637v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 637v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="637" fill="#1c1f28" stroke-width="0" dy="4.4">stat_subpenny[31:0]</text>
+<path d="M2818 667v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 667v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="667" fill="#1c1f28" stroke-width="0" dy="4.4">stat_underflow[31:0]</text>
+<path d="M2818 697v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 697v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="697" fill="#1c1f28" stroke-width="0" dy="4.4">stat_messages[31:0]</text>
+<path d="M2818 727v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 727v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="727" fill="#1c1f28" stroke-width="0" dy="4.4">stat_frame_err[31:0]</text>
+<path d="M2818 767v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 767v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="767" fill="#1c1f28" stroke-width="0" dy="4.4">stat_packets[31:0]</text>
+<path d="M2818 797v-7h14l7 7l-7 7h-14z" stroke="none" fill="#ddd4d0" />
+<path d="M2818 797v-7h14l7 7l-7 7h-14z" />
+<text x="2843" y="797" fill="#1c1f28" stroke-width="0" dy="4.4">stat_dropped[31:0]</text>
+</g>
+<g stroke-width="3">
+<path d="M2738 207h30v30h50" />
+<path d="M2738 227h20v40h60" />
+</g>
+<g>
+<path d="M2738 187h50v20h30" />
+</g>
+<g stroke-width="3">
+<path d="M2738 107h50v-20h30" />
+</g>
+<g>
+<path d="M2738 87h30v-30h50" />
+</g>
+<g stroke-width="3">
+<path d="M2738 147h80" />
+<path d="M2738 167h50v10h30" />
+</g>
+<g>
+<path d="M2738 127h30v-10h50" />
+</g>
+<g stroke-width="3">
+<path d="M178 467h990v130h440v-110h380v-40h390v-350h60" />
+<path d="M1168 467h30" />
+<path d="M1165 464h7v7h-7z" stroke="none" fill="#8bc34a" />
+<path d="M178 547h970v60h470v-90h390v-30h410v-50h20" />
+</g>
+<g>
+<path d="M218 617h-20v-60h350v220h20" />
+<path d="M548 577h280" />
+<path d="M826 575h5v5h-5z" stroke="none" fill="#8bc34a" />
+<path d="M1198 347h-70v-140h490v270h340v-320h100" />
+<path d="M1958 457h400v-400h80" />
+<path d="M2358 357h80" />
+<path d="M2356 355h5v5h-5z" stroke="none" fill="#8bc34a" />
+<path d="M178 577h20" />
+<path d="M196 575h5v5h-5z" stroke="none" fill="#8bc34a" />
+<path d="M546 575h5v5h-5z" stroke="none" fill="#8bc34a" />
+<path d="M868 667h-40v-320h300" />
+<path d="M1126 345h5v5h-5z" stroke="none" fill="#8bc34a" />
+<path d="M1618 207h30" />
+<path d="M1616 205h5v5h-5z" stroke="none" fill="#8bc34a" />
+<path d="M1956 455h5v5h-5z" stroke="none" fill="#8bc34a" />
+</g>
+<g stroke-width="3">
+<path d="M1518 317h60v190h450v-30h380v-60h30" />
+<path d="M1518 357h30v-50h100" />
+<path d="M1518 277h20v-10h110" />
+<path d="M1518 397h50v-50h80" />
+<path d="M1518 337h20v-50h110" />
+<path d="M1518 477h20v-70h110" />
+</g>
+<g>
+<path d="M1518 377h40v-50h90" />
+</g>
+<g stroke-width="3">
+<path d="M1518 437h70v-70h60" />
+</g>
+<g>
+<path d="M1518 457h90v-70h40" />
+<path d="M1518 297h80v200h350v-30h450v-70h40" />
+</g>
+<g stroke-width="3">
+<path d="M1518 497h40v40h1240v-20h20" />
+<path d="M1518 517h30v30h1270" />
+<path d="M1518 537h20v100h1280" />
+</g>
+<g stroke="#94979a" stroke-width="4">
+<path d="M808 757h40v-110h20" />
+</g>
+<g stroke-width="3">
+<path d="M808 797h2010" />
+<path d="M808 777h1950v-10h60" />
+</g>
+<g>
+<path d="M1648 247h-20v280h330v-30h800v-110h-20" />
+</g>
+<g stroke-width="3">
+<path d="M2738 407h50v-10h30" />
+<path d="M1108 637h30v-230h60" />
+<path d="M1108 617h20v-230h70" />
+<path d="M1108 677h70v-230h20" />
+</g>
+<g>
+<path d="M1108 657h50v-230h40" />
+</g>
+<g stroke-width="3">
+<path d="M1108 717h70v10h1640" />
+<path d="M1108 697h1710" />
+</g>
+<g>
+<path d="M1928 257h130" />
+<path d="M1928 297h130" />
+</g>
+<g stroke-width="3">
+<path d="M1928 277h130" />
+<path d="M1928 317h130" />
+</g>
+<g>
+<path d="M1928 217h130" />
+</g>
+<g stroke-width="3">
+<path d="M1928 237h130" />
+</g>
+<g>
+<path d="M1928 197h130" />
+<path d="M1928 417h50v110h810v-40h30" />
+</g>
+<g stroke-width="3">
+<path d="M1928 337h110v170h730v-80h50" />
+<path d="M1928 357h90v160h760v-60h40" />
+<path d="M1928 377h70v200h820" />
+<path d="M1928 397h40v210h850" />
+<path d="M2318 267h100v-10h20" />
+<path d="M2318 247h70v-10h50" />
+</g>
+<g>
+<path d="M2318 287h90v-70h30" />
+</g>
+<g stroke-width="3">
+<path d="M2318 167h30v-30h90" />
+</g>
+<g>
+<path d="M2318 147h20v-30h100" />
+</g>
+<g stroke-width="3">
+<path d="M2318 207h70v-10h50" />
+<path d="M2318 187h20v-10h100" />
+</g>
+<g>
+<path d="M2318 227h50v-70h70" />
+</g>
+<g stroke-width="3">
+<path d="M2318 327h70v340h430" />
+<path d="M518 657h20v140h30" />
+<path d="M538 677h300" />
+<path d="M835 674h7v7h-7z" stroke="none" fill="#8bc34a" />
+<path d="M1198 367h-20v-150h450" />
+<path d="M1625 214h7v7h-7z" stroke="none" fill="#8bc34a" />
+<path d="M2058 177h-20v-90h360" />
+<path d="M2395 84h7v7h-7z" stroke="none" fill="#8bc34a" />
+<path d="M535 674h7v7h-7z" stroke="none" fill="#8bc34a" />
+<path d="M868 687h-30v-320h340" />
+<path d="M1175 364h7v7h-7z" stroke="none" fill="#8bc34a" />
+<path d="M1648 227h-20v-90h410" />
+<path d="M2035 134h7v7h-7z" stroke="none" fill="#8bc34a" />
+<path d="M2438 77h-40v300h40" />
+</g>
+<g>
+<path d="M178 637h40" />
+</g>
+<g stroke="#94979a" stroke-width="4">
+<path d="M178 757h390" />
+</g>
+</g>
+</svg>

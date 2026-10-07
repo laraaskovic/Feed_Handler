@@ -35,6 +35,7 @@ used.
 | [10](#10-results-latency-area-timing) | Results: latency, area, timing |
 | [11](#11-setup-and-repo-layout) | Setup and repo layout |
 | [12](#12-status-and-what-is-deliberately-not-done) | Status, and what is deliberately not done |
+| [13](#13-perspective-the-usual-design-or-not-and-is-1314-cycles-fast) | Perspective: standard or unusual, fast or slow, and what a product would add |
 
 ---
 
@@ -43,7 +44,9 @@ used.
 **What exists.** Eleven SystemVerilog files implementing the complete pipeline,
 wire to top of book, plus a Python golden model that every stage is diffed
 against, 77 cocotb tests, a mutation-testing harness that proves those tests
-can fail, and an open-source synthesis flow that runs on any machine.
+can fail, and an open-source synthesis flow that runs on any machine. The whole
+pipeline also exists as a Vivado IP Integrator block design, proven identical
+to the RTL top cycle for cycle in a second simulator.
 
 ```
    10 GbE, 64-bit AXI-Stream @ 156.25 MHz, no backpressure
@@ -57,6 +60,17 @@ can fail, and an open-source synthesis flow that runs on any machine.
         ▼
    best bid / best ask, price and size, 13–14 cycles after the message's last byte
 ```
+
+**The same pipeline in Vivado IP Integrator.** Every block is the real RTL,
+and the diagram is checked against `feed_handler_top` cycle for cycle (see
+[§8](#vivadobd--the-same-pipeline-as-a-vivado-block-design)):
+
+![The feed handler as a Vivado block design](docs/block_design.svg)
+
+**Where every cycle goes.** No stage waits on another, and nothing depends on
+the data, so every message takes exactly this path:
+
+![Latency timeline, stage by stage](docs/latency_timeline.svg)
 
 **The three numbers that matter.**
 
@@ -1028,6 +1042,68 @@ that count as a signed-off Fmax. Results so far are in
 [§10](#10-results-latency-area-timing); `price_levels`, `order_table` and
 `feed_handler_top` have not been run yet.
 
+### `vivado/bd/` — the same pipeline as a Vivado block design
+
+![The feed handler as an IP Integrator block design](docs/block_design.svg)
+
+The whole pipeline, drawn in Vivado IP Integrator: one block per stage,
+connected left to right in the order the data flows, so the design can be
+explored, probed and re-wired in the GUI.
+
+```bash
+vivado -mode batch -source syn/vivado/bd/build_bd.tcl              # build it
+vivado syn/out/vivado/bd/feed_handler_bd.xpr                       # open it
+python tb/bd_equiv_stim.py                                         # stimulus
+vivado -mode batch -source syn/vivado/bd/sim_equiv.tcl             # prove it
+vivado -mode batch -source syn/vivado/bd/build_bd.tcl -tclargs impl  # route it
+vivado -mode gui   -source syn/vivado/bd/export_diagram.tcl        # the image above
+```
+
+**What the blocks are.** Every stage is an RTL *module reference*, not a copy.
+`rtl/bd/*.v` are thin Verilog wrappers around the `.sv` modules: IP Integrator
+wants a Verilog or VHDL top file, and the wrappers' `X_INTERFACE_INFO`
+attributes tell Vivado which ports form a bus. Edit the SystemVerilog and the
+diagram picks it up ("Refresh Changed Modules"). Three kinds of connection
+appear:
+
+- **AXI-Stream interfaces.** The input `s` and the hdr_parse → msg_frame link
+  are single bus connections. The MoldUDP64 sequence number and message count
+  ride in `TUSER` (`[63:0]` sequence, `[79:64]` count), which is exactly the
+  "sideband held for the packet" contract hdr_parse already had.
+- **Plain nets** for everything that is not a stream: the 400-bit message bus,
+  the decoded op, the level updates, the BBO.
+- **One Xilinx IP**, `proc_sys_reset`, which synchronizes the external reset
+  into the clock domain and fans it out to every stage.
+
+Two stages are inline in `feed_handler_top` and so have no module to wrap: the
+symbol filter and the output registers. They are re-expressed as
+`bd_locate_filter.v` and `bd_bbo_out.v`. The filter gates only the valid bit,
+and the diagram shows that: every other field of the op goes straight from
+decode to the order table.
+
+**How we know it is the same design.** The generated `feed_handler_wrapper`
+has exactly `feed_handler_top`'s ports. `tb/bd_equiv_tb.sv` drives both from
+one stream (20,000 messages, random packet boundaries, random idle gaps) and
+compares **all 22 outputs on every cycle** under xsim. An X counts as a
+failure, so an all-X run cannot pass. Result: 96,552 cycles, 6,701 BBO
+updates, 0 mismatches. Changing the output stage's tick scale from 100 to 101
+fails it 46 cycles into the traffic. The cocotb bench already checks
+`feed_handler_top` against the golden model, so the block design inherits that
+result.
+
+The only intended difference is reset: `proc_sys_reset` releases a few cycles
+later, so the bench starts the feed once *both* report `ready`, as a real
+system would.
+
+**A bug this found.** The first xsim run "passed" with no BBO updates at all:
+decode's extracted fields were X. Its `be16`/`be32`/`be64` helpers read
+`s_msg` without taking it as an argument and were called from `assign`. A
+continuous assignment is re-evaluated only when its *arguments* change (here a
+constant byte offset), so an LRM-faithful simulator evaluates it once at time
+zero. Verilator and synthesis re-evaluate it anyway, which is how it got past
+every cocotb test. The calls now live in an `always_comb`, which the standard
+makes sensitive to what called functions read. There is no logic change.
+
 ### `quartus/build.tcl`, `sta.tcl`, `run.sh`, `ooc.sdc` — routed timing on Intel parts
 
 The same out-of-context idea for machines that have Quartus instead of Vivado
@@ -1082,6 +1158,7 @@ them are worth having.
 | 5 | cocotb, whole pipeline | integration: every message's BBO, every counter, and the latency being constant | WSL + Verilator |
 | 6 | mutation testing | **blind spots in layers 4 and 5** — proving the tests can fail | WSL + Verilator |
 | 7 | real-data replay + synthesis | everything random stimulus never thought to generate; and whether it can physically run at the clock | WSL; Vivado for sign-off |
+| 8 | block design vs. `feed_handler_top`, in xsim | wiring slips in the Vivado block design, and RTL that only works because Verilator is lenient | Vivado |
 
 ### 9.1 Layer 1 — the model's own tests
 
@@ -1248,7 +1325,41 @@ in [§5](#5-file-by-file-the-rtl-rtl): decode's 14 ns single-cycle divide, the
 encoder's 8.5 ns path, the order table's 10.3 ns serial EXEC. In each case the
 number came first and the restructuring came second.
 
-### 9.7 What a failure looks like
+### 9.7 Layer 8 — the block design, and a second simulator
+
+The Vivado block design ([§8](#vivadobd--the-same-pipeline-as-a-vivado-block-design))
+rewires the pipeline through IP Integrator. That rewiring includes an
+AXI-Stream link carrying the sequence number in `TUSER`, two stages rewritten
+as Verilog, and a reset IP. Any slip in it must show up, so
+`tb/bd_equiv_tb.sv` runs the block design and `feed_handler_top` side by side
+on one stream and compares **all 22 outputs on every cycle**:
+
+```
+beats 96451, cycles compared 96552, BBO updates 6701, mismatches 0
+feed_handler_top: packets 1958 messages 20007 ops 20000 other_symbol 13299 out_of_band 6753
+                  frame_err 0 collisions 0 missing 0 overrun 0 underflow 0
+BD_EQUIV PASS
+```
+
+Two details make the pass mean something:
+- An X on any output counts as a mismatch, so a run where both designs output
+  X cannot pass.
+- The bench demands real traffic: BBO updates and messages must both be
+  non-zero.
+
+To prove it can fail, the output stage's tick scale was changed from 100 to
+101, and the bench failed 46 cycles into the traffic.
+
+**The second simulator found a real bug.** Every other bench runs on
+Verilator. Under xsim, decode's extracted fields came out X. Its byte helpers
+read `s_msg` from inside a function called by `assign`, and the standard
+re-evaluates a continuous assignment only when its *arguments* change. Here
+the argument was a constant, so the fields were computed once, at time zero.
+Verilator re-evaluates anyway, which is how it passed 77 tests. The fix moves
+the calls into an `always_comb`, with no logic change. The lesson is
+standard but easy to skip: **one simulator is one opinion.**
+
+### 9.8 What a failure looks like
 
 The reason to build it this way is what happens when something breaks. A field
 offset wrong by one byte does not produce "the book looks odd after a while"; it
@@ -1262,7 +1373,8 @@ seq 4871 (U): RTL (1, 2469900, 500, 1, 2470100, 300) != model (1, 2469900, 800, 
 `tb/run.py <bench> -w` dumps an FST, GTKWave opens it, and the pcap of the same
 stimulus opens in Wireshark: Wireshark says what *should* be on the wire, the
 waveform says what the RTL actually did with it.
-### 9.8 Run everything
+
+### 9.9 Run everything
 
 ```bash
 # --- anywhere (plain Windows Python is fine) ---------------------------
@@ -1277,6 +1389,12 @@ wsl .venv/bin/python tb/run.py                  # layers 4 and 5, 77 tests
 wsl .venv/bin/python tools/mutate.py            # layer 6, 12 mutations
 REAL_FILE=AAPL.itch REAL_N=0 COCOTB_TEST_FILTER=test_real_data_replay \
     wsl .venv/bin/python tb/run.py feed_handler_top --tag aapl   # layer 7
+
+# --- Vivado (Windows or Linux) -----------------------------------------
+python tb/bd_equiv_stim.py                                        # layer 8
+vivado -mode batch -source syn/vivado/bd/build_bd.tcl             # layer 8
+vivado -mode batch -source syn/vivado/bd/sim_equiv.tcl            # layer 8
+vivado -mode batch -source syn/vivado/bd/build_bd.tcl -tclargs impl  # layer 7, routed
 ```
 
 A green run of all of it is the claim this repository makes. Anything less
@@ -1301,6 +1419,14 @@ registers its BBO on the output ports:
 | `price_levels` | 5 |
 | output registers | 1 |
 | **wire → BBO** | **13–14 cycles = 83–90 ns @ 156.25 MHz** (Replace: 14–15) |
+
+![Latency timeline, stage by stage](docs/latency_timeline.svg)
+
+The block design in [§8](#vivadobd--the-same-pipeline-as-a-vivado-block-design)
+has exactly this latency: it matches `feed_handler_top` on every output on
+every cycle. For how 13–14 cycles compares with software and commercial
+designs, and where cycles could still be cut, see
+[§13](#13-perspective-the-usual-design-or-not-and-is-1314-cycles-fast).
 
 The test does not report an average. It asserts that framer→BBO latency is a
 **single value per message type**, that a Replace is exactly one more, and that
@@ -1447,10 +1573,14 @@ claim is checked on every single run rather than argued.
 ```
 model/   Python reference pipeline — the golden model and the measuring instrument
 rtl/     SystemVerilog: 11 files, the whole datapath
+rtl/bd/  Verilog wrappers that make each stage a Vivado block-design block
 tb/      cocotb testbenches; they import model/ as the oracle
+         + bd_equiv_tb.sv, the block design vs. the RTL top under xsim
 tools/   Wireshark dissector, pcap cross-check, mutation harness, style checker
-syn/     Yosys flow (any machine) and Vivado out-of-context flow (sign-off)
-docs/    design notes written before and during the build
+syn/     Yosys flow (any machine), Vivado out-of-context flow (sign-off),
+         Vivado block design (syn/vivado/bd/), Quartus flow
+docs/    design notes written before and during the build, and the two
+         diagrams: block_design.svg and latency_timeline.svg
 tests/   pytest suite for the Python model
 data/    data files and extracts — gitignored, nothing here is committed
 ```
@@ -1475,7 +1605,7 @@ Also worth reading, all written *before* the corresponding code:
 |---|---|
 | Python model, pytest, Wireshark cross-check, Yosys | **anywhere**, including plain Windows Python |
 | Verilator + cocotb | **WSL** (Verilator does not run natively on Windows) |
-| Vivado sign-off | **x86-64** Windows or Linux with Vivado installed |
+| Vivado sign-off, block design, xsim equivalence | **x86-64** Windows or Linux with Vivado installed |
 
 ### Quick start, no download needed
 
@@ -1554,6 +1684,26 @@ KU5P):
    Results land in `syn/out/vivado/`. With 8 GB of RAM, close other
    applications; `order_table` is the heavy one.
 
+5. For the block design, use a plain `cmd` window instead of the Tcl Shell.
+   Load Vivado's environment with `call`; running `cmd settings64.bat` just
+   opens a new shell and leaves `vivado` off the PATH:
+
+   ```bat
+   call C:\AMDDesignTools\2026.1\Vivado\settings64.bat
+   cd C:\Users\<you>\Feed_Handler
+   vivado -mode batch -source syn/vivado/bd/build_bd.tcl
+   vivado syn/out/vivado/bd/feed_handler_bd.xpr
+   ```
+
+   In the GUI: **Open Block Design** for the diagram, right-click a block and
+   choose **Go To Source** for its RTL, **Open Elaborated Design → Schematic**
+   for the logic, and **Run Simulation** for the equivalence bench (after
+   `sim_equiv.tcl` has set it up once).
+
+   `build_bd.tcl` (create) rebuilds `syn/out/vivado/bd/` from scratch, so
+   close the GUI first or it fails with "directory in use". The `impl` run
+   builds in its own `bd_impl/` and never touches the GUI's project.
+
 ### Using the real data
 
 Nasdaq publishes full days of TotalView-ITCH 5.0 sample data for free (search
@@ -1592,6 +1742,8 @@ from**.
 | 8 | Price-level table, bitmap + priority encoder to BBO | done — 18 tests |
 | 9 | Integration, real-data replay, fixed-latency measurement | done — 7 tests |
 | 10 | Synthesis | **Yosys: done. Vivado (KU5P): `hdr_parse`, `msg_frame`, `decode` met at 156.25 MHz; `price_levels`, `order_table`, top not yet run. Quartus (Cyclone V): partial** |
+
+| 11 | Vivado block design (IP Integrator), xsim equivalence vs. `feed_handler_top` | done — 0 mismatches over 96,552 cycles; found and fixed a decode bug Verilator hid |
 
 **All eleven RTL files are complete and wired together.** There is no stub, no
 `TODO`, and no unimplemented path in `rtl/`.
@@ -1662,3 +1814,86 @@ sufficient: H3 with no stash still dropped 430 orders on AAPL's day.
 - How prices outside the band should be *reported* rather than merely counted.
   Today they are tracked but never laddered, and `stat_out_of_band` is the only
   evidence.
+
+---
+
+## 13. Perspective: the usual design or not, and is 13–14 cycles fast?
+
+### The shape is standard on purpose. The parts are not.
+
+Parse → frame → decode → look up the order → update the price levels →
+publish the top of book. Essentially every hardware feed handler has this
+shape, because the protocol forces it. You cannot update a level before you
+know the order's price, and for `E`/`C`/`X`/`D`/`U` the price lives only in
+your own table. A reviewer will recognise the block diagram immediately,
+which is a feature.
+
+What is *not* the textbook answer, and is worth talking about:
+
+| Problem | The usual answer | What this design does, and why |
+|---|---|---|
+| Order reference → order | A CAM (small), or a hash table in DRAM (big, with variable latency) | A **hashed 8-way set-associative table in BRAM with a 16-entry stash**. H3 universal hashing replaced XOR-folding after real data broke it. The geometry was chosen by replaying whole real trading days in `model/table_sim.py` until **zero** orders dropped. |
+| Best price | A sorted list or heap (data-dependent time), or tracking the best incrementally (which needs a rescan when the best level empties) | A **4096-bit occupancy bitmap with a two-level 64×64 priority encoder**. Constant time whether the book is full or empty, and whether the best level just vanished or not. |
+| Message boundaries at 10 Gb/s | Often 1 byte/cycle at a higher clock, or assumed aligned | **8 bytes/cycle at any byte offset**, with a 1 byte/cycle twin kept as a reference model (`msg_frame_slow.sv`) |
+| Latency | Usually quoted as an average | **A constant per message type, asserted by a test**: nothing in the datapath branches on a value |
+| Verification | Directed tests, maybe a scoreboard | A golden model diffed **after every message**, Wireshark cross-checks, real full-day data, mutation testing, and cycle-exact equivalence for the block design (§9) |
+
+Also standard, stated plainly so nobody has to discover it:
+- It tracks one symbol (§12 explains the measurement behind that).
+- The input is AXI-Stream from a MAC that is not in this repo.
+- The status counters are bare ports rather than AXI-Lite registers.
+
+### Is 13–14 cycles good?
+
+**For a 64-bit datapath at 156.25 MHz, it is solid. It is not the frontier.**
+Some context, with the caveat that everybody measures latency differently:
+
+| | Typical message-in → book-updated latency | What is included |
+|---|---|---|
+| Tuned software, kernel-bypass networking | roughly 1–5 µs | NIC, PCIe, CPU, caches |
+| **This design** | **83–90 ns** (13–14 cycles) | from the clock edge that takes in the message's **last byte** to the registered BBO. The Ethernet MAC/PCS is **not** included and would add tens of ns. |
+| Commercial FPGA feed handlers | vendors advertise tens to low hundreds of ns | varies: some include the MAC, some start counting at the first byte |
+
+So the honest one-liner: **about 85 ns of pipeline latency, constant, at line
+rate, more than an order of magnitude below software, and in the right league
+for FPGA designs, though not the fastest possible.**
+
+Two things make the number more credible than it looks:
+- Measuring from the **last** byte is the fair choice for a book. An Add's
+  price is in bytes 32–35 of a 36-byte message, so nothing correct can happen
+  much earlier.
+- The number is a **constant**. A design that is 60 ns on average but 300 ns
+  when the best level empties is worse for trading than one that is always
+  85 ns.
+
+### Where the cycles could be cut
+
+Read this against the latency timeline in [§0](#0-the-result-in-one-screen).
+These are estimates, not measured. Each was a deliberate trade for timing
+closure or simplicity:
+
+| Idea | Saves | Cost |
+|---|---|---|
+| **Overlap decode with the order-table read.** The lookup needs only the 64-bit reference, which is ready after decode's first cycle. The tick (the ×1/25 DSP and band check) is needed only later, by the ladder. | ~2 cycles | The op's fields must be re-aligned with the lookup result |
+| **Speculative encoding in `price_levels`.** Start the priority encoder on the bitmap with the new update's bit already forwarded, instead of after the write. | ~1–2 cycles | A wider forwarding path on the slowest module, which is also the one most at risk on timing |
+| **Cut-through lookup.** For `D`/`E`/`X`/`U`, start hashing the reference as soon as bytes 11–18 arrive, before the message ends. | 1–2 cycles on those types | Latency would then differ per message type (still fixed per type) |
+| **A faster lane.** The same pipeline on 25 GbE (64-bit at 390.625 MHz), if it closed timing. | ~2.5× in ns, at the same cycle count | A new timing-closure campaign, mostly in `order_table` and `price_levels` |
+
+A reasonable floor for this architecture is around **8–9 cycles (~55 ns)**.
+Getting there is a project of its own, and the verification in this repo is
+what would make attempting it safe.
+
+### What separates this from a product
+
+- **A MAC/PCS and a board**, with latency measured on the wire by hardware
+  timestamps rather than in simulation.
+- **Gap detection and recovery.** The MoldUDP64 sequence and count already
+  leave `hdr_parse` for exactly this. A product also needs retransmission
+  requests and snapshot recovery.
+- **Many symbols.** Per-symbol ladders in UltraRAM or HBM, or a different
+  structure entirely. §12 has the measurement showing why one table for all
+  8,713 symbols does not fit in BRAM.
+- **Depth beyond the top of book**: the next N levels per side, which the
+  bitmap already makes cheap to find.
+- **Control and observability**: AXI-Lite registers for the counters and
+  configuration, and an ILA on the BBO path.

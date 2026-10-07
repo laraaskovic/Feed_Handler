@@ -23,3 +23,11 @@ syn/out/
 # cocotb / Verilator build output and per-run results
 tb/sim_build/
 tb/results.xml
+
+# Vivado droppings in the repo root: crash dumps, process logs, GUI netlist
+# viewer logs and clock-routing debug files. Never source, never commit.
+hs_err_pid*.log
+vivado_pid*.str
+vivado_pid*.zip
+nlviewcommon*.logfile
+clockInfo.txt

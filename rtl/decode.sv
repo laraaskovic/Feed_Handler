@@ -108,6 +108,14 @@ module decode #(
   // -------------------------------------------------------------------------
   // Helper: pull a big-endian field out of the little-endian-lane message bus.
   // Byte k of the message sits at bits [8k+7:8k].
+  //
+  // These read s_msg directly rather than taking it as an argument, so they
+  // must only be called from always_comb. A continuous `assign x = be16(1)`
+  // is re-evaluated only when its ARGUMENTS change - here a constant - so an
+  // LRM-faithful simulator (xsim) computes it once at time 0 and holds X.
+  // always_comb is defined to be sensitive to what called functions read.
+  // Verilator and synthesis accept either form, which is how the assign
+  // version survived every cocotb test.
   // -------------------------------------------------------------------------
   function automatic logic [15:0] be16(input int k);
     // Byte k is the most significant half of a 2-byte big-endian field.
@@ -139,32 +147,36 @@ module decode #(
   logic [7:0]  msg_type;
   logic [15:0] locate;
   assign msg_type = s_msg[7:0];
-  assign locate   = be16(1);
 
   // A/F: ref(11) side(19) shares(20) symbol(24) price(32)
   logic [63:0] add_ref;
   logic        add_side;
-  assign add_ref   = be64(11);
   // Compare against 'B' rather than testing a bit: the spec says the field is
   // a character, and 'B' vs 'S' differ in more than one bit.
   assign add_side  = (s_msg[8*19 +: 8] == itch_pkg::SIDE_BUY);
   logic [31:0] add_qty, add_price;
-  assign add_qty   = be32(20);
-  assign add_price = be32(32);
 
   // E/C/X all share: ref(11) shares(19). C's execution price at byte 32 is
   // deliberately not read - see the header comment.
   logic [63:0] red_ref;
   logic [31:0] red_qty;
-  assign red_ref = be64(11);
-  assign red_qty = be32(19);
 
   // U: old ref(11) new ref(19) shares(27) price(31)
   logic [63:0] rep_new_ref;
   logic [31:0] rep_qty, rep_price;
-  assign rep_new_ref = be64(19);
-  assign rep_qty     = be32(27);
-  assign rep_price   = be32(31);
+
+  // Every big-endian field, in one always_comb - see the helpers above.
+  always_comb begin
+    locate      = be16(1);
+    add_ref     = be64(11);
+    add_qty     = be32(20);
+    add_price   = be32(32);
+    red_ref     = be64(11);
+    red_qty     = be32(19);
+    rep_new_ref = be64(19);
+    rep_qty     = be32(27);
+    rep_price   = be32(31);
+  end
 
   // The whole of book.Book.apply()'s dispatch, expressed as a mux.
   itch_pkg::op_e op_c;
